@@ -68,36 +68,35 @@ public without sharing class ApexValidator {
         public Boolean isInvalid() {
             if(this.ruleCriterion.ValueType__c == 'RegEx') return this.isInvalidRegEx();
 
-            Object recordFieldValue = this.getFieldValue();
-            Object comparisonValue  = this.getComparisonValue();
+            String recordFieldValue = this.getFieldValue();
+            String comparisonValue  = this.getComparisonValue();
 
             switch on this.ruleCriterion.Operator__c {
                 // TODO kind of critical to, ya know, make sure this works for all data types, etc
                 // In theory, should work b/c all SObject Fields have a toString method
-                when '==' { return String.valueOf(recordFieldValue)    ==   String.valueOf(comparisonValue); }
-                when '!=' { return String.valueOf(recordFieldValue)    !=   String.valueOf(comparisonValue); }
-                when '<'  { return String.valueOf(recordFieldValue)    <    String.valueOf(comparisonValue); }
-                when '>'  { return String.valueOf(recordFieldValue)    >    String.valueOf(comparisonValue); }
-                when '<=' { return String.valueOf(recordFieldValue)    <=   String.valueOf(comparisonValue); }
-                when '>=' { return String.valueOf(recordFieldValue)    >=   String.valueOf(comparisonValue); }
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
                 when else { return true; }
             }
         }
 
         private Boolean isInvalidRegEx() {
             Pattern pattern = Pattern.compile(this.ruleCriterion.Value__c);
-            Matcher matcher = pattern.matcher(String.valueOf(this.getFieldValue()));
-            return matcher.matches();
+            return pattern.matcher(this.getFieldValue()).matches();
+       }
+
+        private String getFieldValue() {
+            return String.valueOf(this.record.get(this.ruleCriterion.Field__r.QualifiedApiName));
         }
 
-        private Object getFieldValue() {
-            return this.record.get(this.ruleCriterion.Field__r.QualifiedApiName);
-        }
-
-        private Object getComparisonValue() {
+        private String getComparisonValue() {
             if(this.ruleCriterion.Value__c == null) return null;
             else if(this.ruleCriterion.ValueType__c == 'Static Value') return this.ruleCriterion.Value__c;
-            else if(this.ruleCriterion.ValueType__c == 'Field Value') return record.get(this.ruleCriterion.Value__c);
+            else if(this.ruleCriterion.ValueType__c == 'Field Value') return String.valueOf(record.get(this.ruleCriterion.Value__c));
             else return null;
         }
 
