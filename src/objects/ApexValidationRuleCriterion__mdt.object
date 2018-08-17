@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fields>
+        <fullName>ApexValidationRule__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Apex Validation Rule</label>
+        <referenceTo>ApexValidationRule__mdt</referenceTo>
+        <relationshipLabel>Apex Validation Rule Criteria</relationshipLabel>
+        <relationshipName>ApexValidationRuleCriteria</relationshipName>
+        <required>true</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Field__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Field</label>
+        <metadataRelationshipControllingField>ApexValidationRuleCriterion__mdt.SObjectType__c</metadataRelationshipControllingField>
+        <referenceTo>FieldDefinition</referenceTo>
+        <relationshipLabel>Apex Field Validation Rules</relationshipLabel>
+        <relationshipName>ApexFieldValidationRules</relationshipName>
+        <required>true</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Operator__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Operator</label>
+        <required>true</required>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>==</fullName>
+                    <default>false</default>
+                    <label>equals</label>
+                </value>
+                <value>
+                    <fullName>!=</fullName>
+                    <default>false</default>
+                    <label>not equal to</label>
+                </value>
+                <value>
+                    <fullName>&lt;</fullName>
+                    <default>false</default>
+                    <label>less than</label>
+                </value>
+                <value>
+                    <fullName>&gt;</fullName>
+                    <default>false</default>
+                    <label>greater than</label>
+                </value>
+                <value>
+                    <fullName>&lt;=</fullName>
+                    <default>false</default>
+                    <label>less or equal</label>
+                </value>
+                <value>
+                    <fullName>&gt;=</fullName>
+                    <default>false</default>
+                    <label>greater or equal</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>SObjectType__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>SObject Type</label>
+        <referenceTo>EntityDefinition</referenceTo>
+        <relationshipLabel>Apex Field Validation Rules</relationshipLabel>
+        <relationshipName>ApexFieldValidationRules</relationshipName>
+        <required>true</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Type</label>
+        <required>false</required>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Value</fullName>
+                    <default>true</default>
+                    <label>Value</label>
+                </value>
+                <value>
+                    <fullName>Field</fullName>
+                    <default>false</default>
+                    <label>Field</label>
+                </value>
+                <value>
+                    <fullName>RegEx</fullName>
+                    <default>false</default>
+                    <label>RegEx</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Value__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Value</label>
+        <length>255</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Apex Validation Rule Criterion</label>
+    <pluralLabel>Apex Validation Rule Criteria</pluralLabel>
+    <validationRules>
+        <fullName>InvalidApexRuleType</fullName>
+        <active>true</active>
+        <errorConditionFormula>NOT(
+  ISPICKVAL(
+    ApexValidationRule__r.Type__c,
+    &apos;Field-Value Pairs&apos;
+  )
+)</errorConditionFormula>
+        <errorDisplayField>ApexValidationRule__c</errorDisplayField>
+        <errorMessage>Apex Validation Rule must be Type = &apos;Field-Value Pairs&apos;</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>SObjectTypesMismatch</fullName>
+        <active>true</active>
+        <description>SObject Type must match the Apex Validation Rule&apos;s SObject Type</description>
+        <errorConditionFormula>SObjectType__c != ApexValidationRule__r.SObjectType__c</errorConditionFormula>
+        <errorDisplayField>SObjectType__c</errorDisplayField>
+        <errorMessage>SObject Type must match the Apex Validation Rule&apos;s SObject Type</errorMessage>
+    </validationRules>
+    <visibility>Public</visibility>
+</CustomObject>
