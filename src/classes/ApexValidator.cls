@@ -17,8 +17,8 @@ public without sharing class ApexValidator {
         this.records     = records;
     }
 
-    public void validate() {
-        System.debug('validate');
+    public void execute() {
+        System.debug('execute');
         for(SObject record : this.records) {
             System.debug('record=' + record);
             for(ApexValidationRule__mdt rule : this.getRules()) {
