@@ -1,3 +1,7 @@
+/*****************************************************************************************************
+* This file is part of the Apex Validation Rules project, released under the MIT License.            *
+* See LICENSE file or go to https://github.com/jongpie/ApexValidationRules for full license details. *
+*****************************************************************************************************/
 public without sharing class ApexValidator {
 
     private Schema.SObjectType sobjectType;
