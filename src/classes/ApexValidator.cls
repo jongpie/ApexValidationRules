@@ -100,10 +100,11 @@ public without sharing class ApexValidator {
         }
 
         private String getComparisonValue() {
-            if(this.ruleCriterion.Value__c == null) return null;
-            else if(this.ruleCriterion.ValueType__c == 'Static Value') return this.ruleCriterion.Value__c;
-            else if(this.ruleCriterion.ValueType__c == 'Field Value') return String.valueOf(record.get(this.ruleCriterion.Value__c));
-            else return null;
+            switch on this.ruleCriterion.ValueType__c {
+                when 'Static Value' { return String.escapeSingleQuotes(this.ruleCriterion.Value__c); }
+                when 'Field Value'  { return String.valueOf(record.get(this.ruleCriterion.Value__c)); }
+                when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
+            }
         }
 
     }
