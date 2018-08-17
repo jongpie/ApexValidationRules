@@ -82,25 +82,25 @@
         <unique>false</unique>
     </fields>
     <fields>
-        <fullName>Type__c</fullName>
+        <fullName>ValueType__c</fullName>
         <externalId>false</externalId>
         <fieldManageability>SubscriberControlled</fieldManageability>
-        <label>Type</label>
-        <required>false</required>
+        <label>Value Type</label>
+        <required>true</required>
         <type>Picklist</type>
         <valueSet>
             <restricted>true</restricted>
             <valueSetDefinition>
                 <sorted>false</sorted>
                 <value>
-                    <fullName>Value</fullName>
-                    <default>true</default>
-                    <label>Value</label>
+                    <fullName>Static Value</fullName>
+                    <default>false</default>
+                    <label>Static Value</label>
                 </value>
                 <value>
-                    <fullName>Field</fullName>
+                    <fullName>Field Value</fullName>
                     <default>false</default>
-                    <label>Field</label>
+                    <label>Field Value</label>
                 </value>
                 <value>
                     <fullName>RegEx</fullName>
@@ -116,24 +116,12 @@
         <fieldManageability>SubscriberControlled</fieldManageability>
         <label>Value</label>
         <length>255</length>
-        <required>true</required>
+        <required>false</required>
         <type>Text</type>
         <unique>false</unique>
     </fields>
     <label>Apex Validation Rule Criterion</label>
     <pluralLabel>Apex Validation Rule Criteria</pluralLabel>
-    <validationRules>
-        <fullName>InvalidApexRuleType</fullName>
-        <active>true</active>
-        <errorConditionFormula>NOT(
-  ISPICKVAL(
-    ApexValidationRule__r.Type__c,
-    &apos;Field-Value Pairs&apos;
-  )
-)</errorConditionFormula>
-        <errorDisplayField>ApexValidationRule__c</errorDisplayField>
-        <errorMessage>Apex Validation Rule must be Type = &apos;Field-Value Pairs&apos;</errorMessage>
-    </validationRules>
     <validationRules>
         <fullName>SObjectTypesMismatch</fullName>
         <active>true</active>
