@@ -5,5 +5,10 @@
         <members>ApexValidationRule__mdt</members>
         <name>CustomObject</name>
     </types>
+    <types>
+        <members>ApexValidationRuleCriterion__mdt-Apex Validation Rule Criterion Layout</members>
+        <members>ApexValidationRule__mdt-Apex Validation Rule Layout</members>
+        <name>Layout</name>
+    </types>
     <version>43.0</version>
 </Package>
