@@ -55,6 +55,8 @@ public without sharing class ApexValidator {
         ];
     }
 
+    private class ApexValidatorException extends Exception {}
+
     private class RuleCriterionValidator {
 
         private ApexValidationRuleCriterion__mdt ruleCriterion;
@@ -77,10 +79,10 @@ public without sharing class ApexValidator {
                 when '==' { return recordFieldValue == comparisonValue; }
                 when '!=' { return recordFieldValue != comparisonValue; }
                 when '<'  { return recordFieldValue <  comparisonValue; }
-                when '>'  { return recordFieldValue >  comparisonValue; }
                 when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
                 when '>=' { return recordFieldValue >= comparisonValue; }
-                when else { return true; }
+                when else { throw new ApexValidatorException('Unknown operator'); }
             }
         }
 
