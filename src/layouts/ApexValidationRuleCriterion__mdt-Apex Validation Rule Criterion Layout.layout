@@ -45,6 +45,10 @@
                 <behavior>Required</behavior>
                 <field>Field__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>ParentFieldPath__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>

@@ -70,6 +70,19 @@
         </valueSet>
     </fields>
     <fields>
+        <fullName>ParentFieldPath__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>DeveloperControlled</fieldManageability>
+        <inlineHelpText>For lookup &amp; master/detail fields, you can use this to validate the value of a parent field. Note that you must query for the parent fields before passing your records to the validator.
+
+Example for Contact: &apos;Account.Parent.RecordType.Name&apos;</inlineHelpText>
+        <label>Parent Field Path</label>
+        <length>255</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
         <fullName>SObjectType__c</fullName>
         <externalId>false</externalId>
         <fieldManageability>SubscriberControlled</fieldManageability>
@@ -122,6 +135,16 @@
     </fields>
     <label>Apex Validation Rule Criterion</label>
     <pluralLabel>Apex Validation Rule Criteria</pluralLabel>
+    <validationRules>
+        <fullName>Reference_Field_Path_Invalid</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND(
+  LEFT(Field__r.DataType, 6) != &apos;Lookup&apos;,
+  NOT(ISBLANK(ParentFieldPath__c))
+)</errorConditionFormula>
+        <errorDisplayField>ParentFieldPath__c</errorDisplayField>
+        <errorMessage>Reference Field Path can only be used for Lookup &amp; Master/Detail relationship fields</errorMessage>
+    </validationRules>
     <validationRules>
         <fullName>SObjectTypesMismatch</fullName>
         <active>true</active>
