@@ -4,45 +4,32 @@
 *****************************************************************************************************/
 public without sharing class ApexValidator {
 
-    private Schema.SObjectType sobjectType;
     private List<SObject> records;
-
-    public ApexValidator() {
-        this.sobjectType = Trigger.new != null ? Trigger.new.getSObjectType() : Trigger.old.getSObjectType();
-        this.records     = Trigger.new != null ? Trigger.new                  : Trigger.old;
-    }
+    List<ApexValidationRule__mdt> rules;
+    private Schema.SObjectType sobjectType;
 
     public ApexValidator(SObject record) {
         this(new List<SObject>{record});
     }
 
     public ApexValidator(List<SObject> records) {
-        this.sobjectType = records[0].getSObjectType();
         this.records     = records;
+        this.sobjectType = records[0].getSObjectType();
+
+        this.rules = this.getRules();
     }
 
-    public void execute() {
-        System.debug('execute');
+    public List<ApexValidationRuleResult> getResults() {
+        System.debug('getResults');
+
+        List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
         for(SObject record : this.records) {
-            System.debug('record=' + record);
-            for(ApexValidationRule__mdt rule : this.getRules()) {
-                System.debug('rule=' + rule);
-                List<RuleCriterionValidator> validators = new List<RuleCriterionValidator>();
-                for(ApexValidationRuleCriterion__mdt ruleCriterion : rule.ApexValidationRuleCriteria__r) {
-                    System.debug('ruleCriterion=' + ruleCriterion);
-                    validators.add(new RuleCriterionValidator(ruleCriterion, record));
-                    //Boolean isInvalid = new RuleCriterionValidator(ruleCriterion, record).isInvalid();
-                    //System.debug('isInvalid=' + isInvalid);
-                    //if(isInvalid) record.addError(rule.ErrorMessage__c);
-                }
-                Boolean isInvalid;
-                for(RuleCriterionValidator validator : validators) {
-                    isInvalid = validator.isInvalid();
-                    if(!isInvalid) break;
-                }
-                System.debug('isInvalid=' + isInvalid);
+            for(ApexValidationRule__mdt rule : this.rules) {
+                results.add(new ApexValidationRuleResult(record, rule));
             }
         }
+
+        return results;
     }
 
     private List<ApexValidationRule__mdt> getRules() {
@@ -61,49 +48,189 @@ public without sharing class ApexValidator {
 
     private class ApexValidatorException extends Exception {}
 
-    private class RuleCriterionValidator {
+    private class ApexValidationRuleResult {
 
-        private ApexValidationRuleCriterion__mdt ruleCriterion;
+        //private String errorMessage;
+        private List<String> errorMessages;
+        private Boolean hasErrors {get { return this.errorMessages.size() > 0; } }
+        private Id recordId;
+        //private List<ApexValidationRuleCriterionResult> ruleCriteriaResults;
+
         private SObject record;
+        private ApexValidationRule__mdt rule;
 
-        private RuleCriterionValidator(ApexValidationRuleCriterion__mdt ruleCriterion, SObject record) {
-            this.ruleCriterion = ruleCriterion;
-            this.record    = record;
+        public ApexValidationRuleResult(SObject record, ApexValidationRule__mdt rule) {
+            this.recordId            = record.Id;
+            this.record              = record;
+            this.rule                = rule;
+            this.errorMessages = new List<String>();
+            //this.ruleCriteriaResults = new List<ApexValidationRuleCriterionResult>();
+
+            this.getResults();
         }
 
-        public Boolean isInvalid() {
-            if(this.ruleCriterion.ValueType__c == 'RegEx') return this.isInvalidRegEx();
+        public void getResults() {
+            System.debug('looping through rule ID: ' + this.rule.Id);
+            for(ApexValidationRuleCriterion__mdt ruleCriterion : this.rule.ApexValidationRuleCriteria__r) {
+                System.debug('ruleCriterion=' + ruleCriterion);
+                ApexValidationRuleCriterionResult ruleCriterionResult = new ApexValidationRuleCriterionResult(this.record, ruleCriterion);
+                //this.isInvalid = ruleCriterionResult.isInvalid;
+                //this.ruleCriteriaResults.add(ruleCriterionResult);
 
-            String recordFieldValue = this.getFieldValue();
-            String comparisonValue  = this.getComparisonValue();
 
+                if(ruleCriterionResult.hasError) this.errorMessages.add(this.rule.ErrorMessage__c);
+                //if(isInvalid) record.addError(this.rule.ErrorMessage__c);
+                //if(isInvalid) this.errorMessage = this.rule.ErrorMessage__c;
+            }
+        }
+
+    }
+
+    private class ApexValidationRuleCriterionResult {
+
+        private Boolean hasError;
+        private SObject record;
+        private ApexValidationRuleCriterion__mdt ruleCriterion;
+
+        private ApexValidationRuleCriterionResult(SObject record, ApexValidationRuleCriterion__mdt ruleCriterion) {
+            this.record        = record;
+            this.ruleCriterion = ruleCriterion;
+
+            this.hasError = this.getHasError();
+        }
+
+        public Boolean getHasError() {
+            if(this.ruleCriterion.ValueType__c == 'RegEx') return this.getHasRegExError();
+
+            // TODO add support for field paths
+            Schema.SObjectField field = this.record.getSObjectType().getDescribe().fields.getMap().get(this.ruleCriterion.Field__r.QualifiedApiName);
+System.debug('current rule ruleCriterion=' + this.ruleCriterion);
+            Object recordFieldValue = this.getFieldValue();
+            Object comparisonValue  = this.getComparisonValue();
+System.debug('recordFieldValue=' + recordFieldValue);
+System.debug('comparisonValue=' + comparisonValue);
+            switch on field.getDescribe().getSoapType() {
+                when Boolean  { return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue)); }
+                when Date     { return this.compareDate(Date.valueOf(recordFieldValue), Date.valueOf(comparisonValue)); }
+                when Datetime { return this.compareDatetime(Datetime.valueOf(recordFieldValue), Datetime.valueOf(comparisonValue)); }
+                when Double   { return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue)); }
+                when Id       { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Integer  { return this.compareInteger(Integer.valueOf(recordFieldValue), Integer.valueOf(comparisonValue)); }
+                when String   { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                //when Time     { return this.compareTime(Time.valueOf(recordFieldValue), Time.valueOf(comparisonValue)); }
+                when else     { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
+        private Boolean getHasRegExError() {
+            Pattern pattern = Pattern.compile(this.ruleCriterion.Value__c);
+            return pattern.matcher(String.valueOf(this.getFieldValue())).matches();
+       }
+
+        private Object getFieldValue() {
+            return this.record.get(this.ruleCriterion.Field__r.QualifiedApiName);
+        }
+
+        private Object getComparisonValue() {
+            switch on this.ruleCriterion.ValueType__c {
+                when 'Static Value' { return this.ruleCriterion.Value__c; }
+                when 'Field Value'  { return record.get(this.ruleCriterion.Value__c); }
+                when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
+            }
+        }
+
+        private Boolean compareBoolean(Boolean recordFieldValue, Boolean comparisonValue) {
             switch on this.ruleCriterion.Operator__c {
-                // TODO kind of critical to, ya know, make sure this works for all data types, etc
-                // In theory, should work b/c all SObject Fields have a toString method
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
+        private Boolean compareDate(Date recordFieldValue, Date comparisonValue) {
+            switch on this.ruleCriterion.Operator__c {
                 when '==' { return recordFieldValue == comparisonValue; }
                 when '!=' { return recordFieldValue != comparisonValue; }
                 when '<'  { return recordFieldValue <  comparisonValue; }
                 when '<=' { return recordFieldValue <= comparisonValue; }
                 when '>'  { return recordFieldValue >  comparisonValue; }
                 when '>=' { return recordFieldValue >= comparisonValue; }
-                when else { throw new ApexValidatorException('Unknown operator'); }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
             }
         }
 
-        private Boolean isInvalidRegEx() {
-            Pattern pattern = Pattern.compile(this.ruleCriterion.Value__c);
-            return pattern.matcher(this.getFieldValue()).matches();
-       }
-
-        private String getFieldValue() {
-            return String.valueOf(this.record.get(this.ruleCriterion.Field__r.QualifiedApiName));
+        private Boolean compareDatetime(Datetime recordFieldValue, Datetime comparisonValue) {
+            switch on this.ruleCriterion.Operator__c {
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
         }
 
-        private String getComparisonValue() {
-            switch on this.ruleCriterion.ValueType__c {
-                when 'Static Value' { return String.escapeSingleQuotes(this.ruleCriterion.Value__c); }
-                when 'Field Value'  { return String.valueOf(record.get(this.ruleCriterion.Value__c)); }
-                when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
+        private Boolean compareDouble(Double recordFieldValue, Double comparisonValue) {
+            System.debug('compareDouble(' + recordFieldValue + ', ' + comparisonValue + ')');
+            System.debug('this.ruleCriterion.Operator__c=' + this.ruleCriterion.Operator__c);
+
+            switch on this.ruleCriterion.Operator__c {
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
+        private Boolean compareId(Id recordFieldValue, Id comparisonValue) {
+            switch on this.ruleCriterion.Operator__c {
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
+        private Boolean compareInteger(Integer recordFieldValue, Integer comparisonValue) {
+            switch on this.ruleCriterion.Operator__c {
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
+        private Boolean compareString(String recordFieldValue, String comparisonValue) {
+            switch on this.ruleCriterion.Operator__c {
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
+        private Boolean compareTime(Time recordFieldValue, Time comparisonValue) {
+            switch on this.ruleCriterion.Operator__c {
+                when '==' { return recordFieldValue == comparisonValue; }
+                when '!=' { return recordFieldValue != comparisonValue; }
+                when '<'  { return recordFieldValue <  comparisonValue; }
+                when '<=' { return recordFieldValue <= comparisonValue; }
+                when '>'  { return recordFieldValue >  comparisonValue; }
+                when '>=' { return recordFieldValue >= comparisonValue; }
+                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
             }
         }
 
