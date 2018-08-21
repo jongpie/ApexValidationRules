@@ -37,9 +37,15 @@ public without sharing class ApexValidator {
         System.debug('getRules');
         System.debug('String.valueOf(this.sobjectType)=' + String.valueOf(this.sobjectType));
         return [
-            SELECT SObjectType__c, ErrorMessage__c, (
+            SELECT SObjectType__c, CriteriaLogicType__c, CustomCriteriaLogic__c, ErrorMessage__c,
+                (
                     SELECT SObjectType__c, Field__c, Field__r.QualifiedApiName, Operator__c, ValueType__c, Value__c
                     FROM ApexValidationRuleCriteria__r
+                    ORDER BY SortOrder__c
+                ),
+                (
+                    SELECT Language__c, ErrorMessage__c
+                    FROM ApexValidationRuleTranslations__r
                 )
             FROM ApexValidationRule__mdt
             WHERE SObjectType__c = :String.valueOf(this.sobjectType)
@@ -51,35 +57,98 @@ public without sharing class ApexValidator {
 
     private class ApexValidationRuleResult {
 
-        private List<String> errorMessages;
-        private Boolean hasErrors { get { return this.errorMessages.size() > 0; } }
-        private Id recordId;
+        @AuraEnabled public String criteriaLogicType   { get; private set; }
+        @AuraEnabled public String criteriaLogic       { get; private set; }
+        @AuraEnabled public List<String> errorMessages { get; private set; }
+        @AuraEnabled public Boolean hasErrors          { get { return this.errorMessages.size() > 0; } private set; }
+        @AuraEnabled public Id recordId                { get { return this.record.Id; } private set; }
 
         private SObject record;
         private ApexValidationRule__mdt rule;
 
         public ApexValidationRuleResult(SObject record, ApexValidationRule__mdt rule) {
-            this.recordId            = record.Id;
-            this.record              = record;
-            this.rule                = rule;
             this.errorMessages = new List<String>();
+            this.record        = record;
+            //this.recordId      = record.Id;
+            this.rule          = rule;
 
-            this.getResults();
+            this.criteriaLogicType = rule.CriteriaLogicType__c;
+            this.criteriaLogic = this.getRuleCriteriaLogic();
+
+            this.process();
         }
 
-        public void getResults() {
+        private void process() {
             System.debug('looping through rule ID: ' + this.rule.Id);
+            List<String> booleanValues = new List<String>();
             for(ApexValidationRuleCriterion__mdt ruleCriterion : this.rule.ApexValidationRuleCriteria__r) {
                 System.debug('ruleCriterion=' + ruleCriterion);
                 ApexValidationRuleCriterionResult ruleCriterionResult = new ApexValidationRuleCriterionResult(this.record, ruleCriterion);
+                booleanValues.add(String.valueOf(ruleCriterionResult.hasError));
                 //this.isInvalid = ruleCriterionResult.isInvalid;
                 //this.ruleCriteriaResults.add(ruleCriterionResult);
 
 
-                if(ruleCriterionResult.hasError) this.errorMessages.add(this.rule.ErrorMessage__c);
+                if(ruleCriterionResult.hasError && String.isBlank(this.rule.CustomCriteriaLogic__c)) this.errorMessages.add(this.getErrorMessage());
                 //if(isInvalid) record.addError(this.rule.ErrorMessage__c);
                 //if(isInvalid) this.errorMessage = this.rule.ErrorMessage__c;
             }
+            if(String.isBlank(this.rule.CustomCriteriaLogic__c)) return;
+
+            String criteriaLogic = String.format(this.rule.CustomCriteriaLogic__c, booleanValues);
+            this.criteriaLogic = criteriaLogic;
+            System.debug('criteriaLogic criteriaLogic=' + criteriaLogic);
+            Boolean hasError = new BooleanExpression().evaluate(criteriaLogic);
+            System.debug('criteriaLogic hasError=' + hasError);
+        }
+
+        private String getErrorMessage() {
+            if(this.rule.ApexValidationRuleTranslations__r.isEmpty()) return this.rule.ErrorMessage__c;
+
+            for(ApexValidationRuleTranslation__mdt translation : this.rule.ApexValidationRuleTranslations__r) {
+                if(translation.Language__c == UserInfo.getLanguage()) return translation.ErrorMessage__c;
+            }
+
+            return this.rule.ErrorMessage__c;
+        }
+
+        private String getRuleCriteriaLogic() {
+            if(this.rule.CriteriaLogicType__c != 'Custom') {
+                List<String> standardLogicPieces = new List<String>();
+                for(Integer i = 0; i < this.rule.ApexValidationRuleCriteria__r.size(); i++) {
+                    standardLogicPieces.add(' {' + String.valueOf(i) + '} ');
+                }
+                return String.join(standardLogicPieces, this.rule.CriteriaLogicType__c);
+            }
+
+            List<String> parsedCharacters = new List<String>();
+            Boolean hasFoundNumbers = false;
+            String foundNumberString = '';
+
+            for(String character : this.rule.CustomCriteriaLogic__c.split('')) {
+                if(!character.isNumeric() && !hasFoundNumbers) {
+                    parsedCharacters.add(character);
+                } else if(!character.isNumeric() && hasFoundNumbers){
+                    hasFoundNumbers = false;
+                    Integer foundNumber = Integer.valueOf(foundNumberString) - 1;
+
+                    parsedCharacters.add('{' + foundNumber + '}');
+                    foundNumberString = '';
+                    parsedCharacters.add(character);
+                } else if(character.isNumeric()) {
+                    hasFoundNumbers = true;
+                    foundNumberString += character;
+                } else if(hasFoundNumbers && !character.isNumeric() && !String.isBlank(foundNumberString)) {
+                    Integer foundNumber = Integer.valueOf(foundNumberString) - 1;
+
+                    parsedCharacters.add('{' + foundNumber + '}');
+                    foundNumberString = '';
+                } else {
+                    parsedCharacters.add(character);
+                }
+            }
+
+            return String.join(parsedCharacters, '').toUpperCase();
         }
 
     }
@@ -124,6 +193,7 @@ public without sharing class ApexValidator {
        }
 
         private Object getFieldValue() {
+            // TODO add support for field paths
             return this.record.get(this.ruleCriterion.Field__r.QualifiedApiName);
         }
 
@@ -204,10 +274,50 @@ public without sharing class ApexValidator {
             }
         }
 
+    }
+
+    //https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
+    public class BooleanExpression {
+
+        public Boolean evaluate(String x) {
+            x = simplify(x);
+
+            if(isSimpleExpression(x)) return Boolean.valueOf(x);
+
+            if(x.contains('&&')) {
+                return andJoin(x.split('&&', 2)[0], x.split('&&', 2)[1]);
             }
+            if(x.contains('||')) {
+                String p1 = x.split('\\|\\|', 2)[0];
+                String p2 = x.split('\\|\\|', 2)[1];
+                System.debug('p1=' + p1);
+                System.debug('p2=' + p2);
+                return orJoin(p1, p2);
+            }
+            if(x.startsWith('!')) return !evaluate(x.substring(1));
+
+            return Boolean.valueOf(x);
         }
 
+        private Boolean orJoin(String x, String y) {
+            return evaluate(x) || evaluate(y);
+        }
+
+        private Boolean andJoin(String x, String y) {
+            return evaluate(x) && evaluate(y);
+        }
+
+        private Boolean isSimpleExpression(String x) {
+            return x == 'true' || x == 'false';
+        }
+
+        private String simplify(String x) {
+            x = x.trim();
+            while(x.contains('(')) {
+                String sub = x.substringAfterLast('(').substringBefore(')');
+                x = x.replace('(' + sub + ')', String.valueOf(evaluate(sub)));
             }
+            return x;
         }
 
     }
