@@ -24,6 +24,7 @@ public without sharing class ApexValidator {
 
         List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
         for(SObject record : this.records) {
+            record.recalculateFormulas();
             for(ApexValidationRule__mdt rule : this.rules) {
                 results.add(new ApexValidationRuleResult(record, rule));
             }
