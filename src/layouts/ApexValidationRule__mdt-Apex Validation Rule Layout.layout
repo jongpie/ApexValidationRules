@@ -101,11 +101,23 @@
     <relatedLists>
         <fields>MasterLabel</fields>
         <fields>DeveloperName</fields>
+        <fields>SortOrder__c</fields>
         <fields>Field__c</fields>
         <fields>Operator__c</fields>
         <fields>ValueType__c</fields>
         <fields>Value__c</fields>
         <relatedList>ApexValidationRuleCriterion__mdt.ApexValidationRule__c</relatedList>
+        <sortField>SortOrder__c</sortField>
+        <sortOrder>Asc</sortOrder>
+    </relatedLists>
+    <relatedLists>
+        <fields>MasterLabel</fields>
+        <fields>DeveloperName</fields>
+        <fields>Language__c</fields>
+        <fields>ErrorMessage__c</fields>
+        <relatedList>ApexValidationRuleTranslation__mdt.ApexValidationRule__c</relatedList>
+        <sortField>Language__c</sortField>
+        <sortOrder>Asc</sortOrder>
     </relatedLists>
     <showEmailCheckbox>false</showEmailCheckbox>
     <showHighlightsPanel>false</showHighlightsPanel>

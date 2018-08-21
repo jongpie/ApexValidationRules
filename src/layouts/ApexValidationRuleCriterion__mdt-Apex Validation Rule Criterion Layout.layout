@@ -14,6 +14,14 @@
                 <behavior>Required</behavior>
                 <field>DeveloperName</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Required</behavior>
+                <field>ApexValidationRule__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>SortOrder__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
@@ -33,10 +41,6 @@
         <editHeading>true</editHeading>
         <label>Criterion Settings</label>
         <layoutColumns>
-            <layoutItems>
-                <behavior>Required</behavior>
-                <field>ApexValidationRule__c</field>
-            </layoutItems>
             <layoutItems>
                 <behavior>Required</behavior>
                 <field>SObjectType__c</field>

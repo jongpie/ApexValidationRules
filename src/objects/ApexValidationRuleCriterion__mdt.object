@@ -95,6 +95,17 @@ Example for Contact: &apos;Account.Parent.RecordType.Name&apos;</inlineHelpText>
         <unique>false</unique>
     </fields>
     <fields>
+        <fullName>SortOrder__c</fullName>
+        <externalId>false</externalId>
+        <fieldManageability>DeveloperControlled</fieldManageability>
+        <label>Sort Order</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
         <fullName>ValueType__c</fullName>
         <externalId>false</externalId>
         <fieldManageability>SubscriberControlled</fieldManageability>
