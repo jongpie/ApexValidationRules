@@ -57,23 +57,24 @@ public without sharing class ApexValidator {
 
     private class ApexValidationRuleResult {
 
-        @AuraEnabled public String criteriaLogicType   { get; private set; }
-        @AuraEnabled public String criteriaLogic       { get; private set; }
-        @AuraEnabled public List<String> errorMessages { get; private set; }
-        @AuraEnabled public Boolean hasErrors          { get { return this.errorMessages.size() > 0; } private set; }
-        @AuraEnabled public Id recordId                { get { return this.record.Id; } private set; }
+        @AuraEnabled public String criteriaLogicType { get; private set; }
+        @AuraEnabled public String criteriaLogic     { get; private set; }
+        @AuraEnabled public List<String> criteria    { get; private set; }
+        @AuraEnabled public String errorMessage      { get; private set; }
+        @AuraEnabled public Boolean hasError         { get { return !String.isBlank(this.errorMessage); } private set; }
+        @AuraEnabled public Id recordId              { get { return this.record.Id; } private set; }
 
         private SObject record;
         private ApexValidationRule__mdt rule;
 
         public ApexValidationRuleResult(SObject record, ApexValidationRule__mdt rule) {
-            this.errorMessages = new List<String>();
             this.record        = record;
             //this.recordId      = record.Id;
             this.rule          = rule;
 
             this.criteriaLogicType = rule.CriteriaLogicType__c;
             this.criteriaLogic = this.getRuleCriteriaLogic();
+            this.criteria = new List<String>();
 
             this.process();
         }
@@ -84,12 +85,13 @@ public without sharing class ApexValidator {
             for(ApexValidationRuleCriterion__mdt ruleCriterion : this.rule.ApexValidationRuleCriteria__r) {
                 System.debug('ruleCriterion=' + ruleCriterion);
                 ApexValidationRuleCriterionResult ruleCriterionResult = new ApexValidationRuleCriterionResult(this.record, ruleCriterion);
+                this.criteria.add(ruleCriterionResult.getCriterion());
                 booleanValues.add(String.valueOf(ruleCriterionResult.hasError));
                 //this.isInvalid = ruleCriterionResult.isInvalid;
                 //this.ruleCriteriaResults.add(ruleCriterionResult);
 
 
-                if(ruleCriterionResult.hasError && String.isBlank(this.rule.CustomCriteriaLogic__c)) this.errorMessages.add(this.getErrorMessage());
+                if(ruleCriterionResult.hasError && String.isBlank(this.rule.CustomCriteriaLogic__c)) this.errorMessage = this.getErrorMessage();
                 //if(isInvalid) record.addError(this.rule.ErrorMessage__c);
                 //if(isInvalid) this.errorMessage = this.rule.ErrorMessage__c;
             }
@@ -164,6 +166,12 @@ public without sharing class ApexValidator {
             this.ruleCriterion = ruleCriterion;
 
             this.hasError = this.getHasError();
+        }
+
+        public String getCriterion() {
+            return this.ruleCriterion.Field__c
+                + ' ' + this.ruleCriterion.Operator__c
+                + ' ' + this.getComparisonValue() + ' (' + this.ruleCriterion.ValueType__c + ')';
         }
 
         public Boolean getHasError() {
