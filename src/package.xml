@@ -6,11 +6,13 @@
     </types>
     <types>
         <members>ApexValidationRuleCriterion__mdt</members>
+        <members>ApexValidationRuleTranslation__mdt</members>
         <members>ApexValidationRule__mdt</members>
         <name>CustomObject</name>
     </types>
     <types>
         <members>ApexValidationRuleCriterion__mdt-Apex Validation Rule Criterion Layout</members>
+        <members>ApexValidationRuleTranslation__mdt-Apex Validation Rule Translation Layout</members>
         <members>ApexValidationRule__mdt-Apex Validation Rule Layout</members>
         <name>Layout</name>
     </types>
