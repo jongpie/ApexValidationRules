@@ -50,11 +50,9 @@ public without sharing class ApexValidator {
 
     private class ApexValidationRuleResult {
 
-        //private String errorMessage;
         private List<String> errorMessages;
-        private Boolean hasErrors {get { return this.errorMessages.size() > 0; } }
+        private Boolean hasErrors { get { return this.errorMessages.size() > 0; } }
         private Id recordId;
-        //private List<ApexValidationRuleCriterionResult> ruleCriteriaResults;
 
         private SObject record;
         private ApexValidationRule__mdt rule;
@@ -64,7 +62,6 @@ public without sharing class ApexValidator {
             this.record              = record;
             this.rule                = rule;
             this.errorMessages = new List<String>();
-            //this.ruleCriteriaResults = new List<ApexValidationRuleCriterionResult>();
 
             this.getResults();
         }
@@ -104,11 +101,10 @@ public without sharing class ApexValidator {
 
             // TODO add support for field paths
             Schema.SObjectField field = this.record.getSObjectType().getDescribe().fields.getMap().get(this.ruleCriterion.Field__r.QualifiedApiName);
-System.debug('current rule ruleCriterion=' + this.ruleCriterion);
+
             Object recordFieldValue = this.getFieldValue();
             Object comparisonValue  = this.getComparisonValue();
-System.debug('recordFieldValue=' + recordFieldValue);
-System.debug('comparisonValue=' + comparisonValue);
+
             switch on field.getDescribe().getSoapType() {
                 when Boolean  { return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue)); }
                 when Date     { return this.compareDate(Date.valueOf(recordFieldValue), Date.valueOf(comparisonValue)); }
@@ -117,7 +113,6 @@ System.debug('comparisonValue=' + comparisonValue);
                 when Id       { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
                 when Integer  { return this.compareInteger(Integer.valueOf(recordFieldValue), Integer.valueOf(comparisonValue)); }
                 when String   { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
-                //when Time     { return this.compareTime(Time.valueOf(recordFieldValue), Time.valueOf(comparisonValue)); }
                 when else     { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
             }
         }
@@ -133,8 +128,9 @@ System.debug('comparisonValue=' + comparisonValue);
 
         private Object getComparisonValue() {
             switch on this.ruleCriterion.ValueType__c {
-                when 'Static Value' { return this.ruleCriterion.Value__c; }
+                // TODO add support for field paths
                 when 'Field Value'  { return record.get(this.ruleCriterion.Value__c); }
+                when 'Static Value' { return this.ruleCriterion.Value__c; }
                 when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
             }
         }
@@ -172,21 +168,6 @@ System.debug('comparisonValue=' + comparisonValue);
         }
 
         private Boolean compareDouble(Double recordFieldValue, Double comparisonValue) {
-            System.debug('compareDouble(' + recordFieldValue + ', ' + comparisonValue + ')');
-            System.debug('this.ruleCriterion.Operator__c=' + this.ruleCriterion.Operator__c);
-
-            switch on this.ruleCriterion.Operator__c {
-                when '==' { return recordFieldValue == comparisonValue; }
-                when '!=' { return recordFieldValue != comparisonValue; }
-                when '<'  { return recordFieldValue <  comparisonValue; }
-                when '<=' { return recordFieldValue <= comparisonValue; }
-                when '>'  { return recordFieldValue >  comparisonValue; }
-                when '>=' { return recordFieldValue >= comparisonValue; }
-                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
-            }
-        }
-
-        private Boolean compareId(Id recordFieldValue, Id comparisonValue) {
             switch on this.ruleCriterion.Operator__c {
                 when '==' { return recordFieldValue == comparisonValue; }
                 when '!=' { return recordFieldValue != comparisonValue; }
@@ -222,15 +203,9 @@ System.debug('comparisonValue=' + comparisonValue);
             }
         }
 
-        private Boolean compareTime(Time recordFieldValue, Time comparisonValue) {
-            switch on this.ruleCriterion.Operator__c {
-                when '==' { return recordFieldValue == comparisonValue; }
-                when '!=' { return recordFieldValue != comparisonValue; }
-                when '<'  { return recordFieldValue <  comparisonValue; }
-                when '<=' { return recordFieldValue <= comparisonValue; }
-                when '>'  { return recordFieldValue >  comparisonValue; }
-                when '>=' { return recordFieldValue >= comparisonValue; }
-                when else { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            }
+        }
+
             }
         }
 
