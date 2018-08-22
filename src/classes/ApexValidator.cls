@@ -91,17 +91,17 @@ public without sharing class ApexValidator {
                 //this.ruleCriteriaResults.add(ruleCriterionResult);
 
 
-                if(ruleCriterionResult.hasError && String.isBlank(this.rule.CustomCriteriaLogic__c)) this.errorMessage = this.getErrorMessage();
+                //if(ruleCriterionResult.hasError && String.isBlank(this.rule.CustomCriteriaLogic__c)) this.errorMessage = this.getErrorMessage();
                 //if(isInvalid) record.addError(this.rule.ErrorMessage__c);
                 //if(isInvalid) this.errorMessage = this.rule.ErrorMessage__c;
             }
             if(String.isBlank(this.rule.CustomCriteriaLogic__c)) return;
 
-            String criteriaLogic = String.format(this.rule.CustomCriteriaLogic__c, booleanValues);
-            this.criteriaLogic = criteriaLogic;
+            this.criteriaLogic = String.format(this.getRuleCriteriaLogic(), booleanValues);
             System.debug('criteriaLogic criteriaLogic=' + criteriaLogic);
-            Boolean hasError = new BooleanExpression().evaluate(criteriaLogic);
+            Boolean hasError = new BooleanExpression().evaluate(this.criteriaLogic);
             System.debug('criteriaLogic hasError=' + hasError);
+            if(hasError) this.errorMessage = this.getErrorMessage();
         }
 
         private String getErrorMessage() {
