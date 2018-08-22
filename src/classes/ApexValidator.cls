@@ -160,10 +160,12 @@ public without sharing class ApexValidator {
         private Boolean hasError;
         private SObject record;
         private ApexValidationRuleCriterion__mdt ruleCriterion;
+        private String sobjectApiName;
 
         private ApexValidationRuleCriterionResult(SObject record, ApexValidationRuleCriterion__mdt ruleCriterion) {
             this.record        = record;
             this.ruleCriterion = ruleCriterion;
+            this.sobjectApiName = this.record.getSObjectType().getDescribe().getName();
 
             this.hasError = this.getHasError();
         }
@@ -177,8 +179,7 @@ public without sharing class ApexValidator {
         public Boolean getHasError() {
             if(this.ruleCriterion.ValueType__c == 'RegEx') return this.getHasRegExError();
 
-            // TODO add support for field paths
-            Schema.SObjectField field = this.record.getSObjectType().getDescribe().fields.getMap().get(this.ruleCriterion.Field__r.QualifiedApiName);
+            Schema.SObjectField field = new FieldPath(this.sobjectApiName, this.ruleCriterion.Field__r.QualifiedApiName).getField();
 
             Object recordFieldValue = this.getFieldValue();
             Object comparisonValue  = this.getComparisonValue();
@@ -201,14 +202,13 @@ public without sharing class ApexValidator {
        }
 
         private Object getFieldValue() {
-            // TODO add support for field paths
-            return this.record.get(this.ruleCriterion.Field__r.QualifiedApiName);
+            return new FieldPath(this.sobjectApiName, this.ruleCriterion.Field__r.QualifiedApiName).getValue(this.record);
         }
 
         private Object getComparisonValue() {
             switch on this.ruleCriterion.ValueType__c {
                 // TODO add support for field paths
-                when 'Field Value'  { return record.get(this.ruleCriterion.Value__c); }
+                when 'Field Value'  { return new FieldPath(this.sobjectApiName, this.ruleCriterion.Value__c).getValue(this.record); }
                 when 'Static Value' { return this.ruleCriterion.Value__c; }
                 when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
             }
@@ -326,6 +326,121 @@ public without sharing class ApexValidator {
                 x = x.replace('(' + sub + ')', String.valueOf(evaluate(sub)));
             }
             return x;
+        }
+
+    }
+
+    public class FieldPath {
+
+        private final String fieldPath;
+        private Schema.SObjectType sobjectType;
+        private List<Schema.SObjectField> fieldChain;
+        private final Schema.DescribeFieldResult fieldDescribe;
+
+        public FieldPath(String sobjectApiName, String fieldPath) {
+            Schema.SObjectType sobjectType = Schema.getGlobalDescribe().get(sobjectApiName);
+
+            this.fieldChain = this.getFieldChain(sobjectType, fieldPath);
+            this.fieldPath  = fieldPath;
+
+            this.fieldDescribe  = this.getLastFieldDescribe();
+        }
+
+        public FieldPath(Schema.SObjectType sobjectType, Schema.SObjectField field) {
+            this(sobjectType, new List<Schema.SObjectField>{field});
+        }
+
+        public FieldPath(Schema.SObjectType sobjectType, List<Schema.SObjectField> fieldChain) {
+            this.sobjectType = sobjectType;
+            this.fieldChain = fieldChain;
+            this.fieldPath  = this.getQueryField(fieldChain);
+
+            this.fieldDescribe  = this.getLastFieldDescribe();
+        }
+
+        public Schema.DescribeFieldResult getDescribe() {
+            return this.fieldDescribe;
+        }
+
+        public Schema.SObjectField getField() {
+            return this.fieldChain[this.fieldChain.size() - 1];
+        }
+
+        public String getFieldPath() {
+            return this.fieldPath;
+        }
+
+        public Object getValue(SObject record) {
+            // TODO Contact c= [select id, accountid, account.name from contact limit 1];
+            //System.debug(c.getSObject('Account').get('Name'));
+            // System.debug(c.getSObject(Schema.Contact.AccountId).get(Schema.Account.Name));
+            Schema.SObjectType sobjectType = this.sobjectType;
+            SObject parentRecord = record;
+    System.debug('this.fieldChain=' + this.fieldChain);
+            for(Schema.SObjectField field : this.fieldChain) {
+                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+                String relationshipName = fieldDescribe.getRelationshipName();
+                System.debug('sobjectType=' + sobjectType);
+                System.debug('parentRecord=' + parentRecord);
+                System.debug('field=' + field);
+                System.debug('field.getDescribe().getSoapType()=' + field.getDescribe().getSoapType());
+                if(fieldDescribe.getSoapType() == Schema.SoapType.Id) {
+                    sobjectType = fieldDescribe.getReferenceTo()[0];
+                    SObject newParentRecord = parentRecord.getSObject(field);
+                    if(newParentRecord == null) {
+                        System.debug('newParentRecord is null, returning null value');
+                        return null;
+                    }
+                    else parentRecord = newParentRecord;
+                } else{
+                    return parentRecord.get(fieldDescribe.getName());
+                }
+            }
+
+            return null;
+        }
+
+        private List<Schema.SObjectField> getFieldChain(Schema.SObjectType sobjectType, String fieldPath) {
+            Schema.SObjectType currentSObjectType = sobjectType;
+
+            List<Schema.SObjectField> fields = new List<Schema.SObjectField>();
+            List<String> fieldPathPieces = fieldPath.split('\\.');
+            Integer lastFieldIndex = fieldPathPieces.size() <= 1 ? 0 : fieldPathPieces.size() - 1;
+
+            for(Integer i = 0; i < fieldPathPieces.size(); i++) {
+                String fieldPathPiece = fieldPathPieces[i];
+
+                String fieldApiName;
+                if(i == lastFieldIndex) fieldApiName = fieldPathPiece;
+                else if(fieldPathPiece.endsWith('__r')) fieldApiName = fieldPathPiece.replace('__r', '__c');
+                else fieldApiName = fieldPathPiece + 'Id';
+
+                Schema.SObjectField field = currentSObjectType.getDescribe().fields.getMap().get(fieldApiName);
+
+                if(i < lastFieldIndex) currentSObjectType = field.getDescribe().getReferenceTo()[0]; // TODO add support for polymorphic fields
+
+                fields.add(field);
+            }
+            //return this.getLastFieldDescribe();
+            return fields;
+        }
+
+        private Schema.DescribeFieldResult getLastFieldDescribe() {
+            Integer lastFieldIndex = this.fieldChain.size() - 1;
+            return this.fieldChain[lastFieldIndex].getDescribe();
+        }
+
+        private String getQueryField(List<Schema.SObjectField> fields) {
+            Integer lastFieldIndex = fields.size() - 1;
+            List<String> fieldPathPieces = new List<String>();
+            for(Integer i = 0; i < fields.size(); i++) {
+                SObjectField field = fields[i];
+                // If any field in the chain is not accessible, then the user cant access the data, so return an empty list
+                if(!field.getDescribe().isAccessible()) return null;
+                else if(i == lastFieldIndex) fieldPathPieces.add(field.getDescribe().getName());
+                else fieldPathPieces.add(field.getDescribe().getRelationshipName());
+            }
+            return String.join(fieldPathPieces, '.');
         }
 
     }
