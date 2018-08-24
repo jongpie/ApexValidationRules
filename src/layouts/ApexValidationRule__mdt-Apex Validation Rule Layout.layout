@@ -102,6 +102,7 @@
         <fields>MasterLabel</fields>
         <fields>DeveloperName</fields>
         <fields>SortOrder__c</fields>
+        <fields>FieldPath__c</fields>
         <fields>Operator__c</fields>
         <fields>ValueType__c</fields>
         <fields>Value__c</fields>
