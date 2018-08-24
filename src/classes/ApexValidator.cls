@@ -74,27 +74,16 @@ public without sharing class ApexValidator {
         }
 
         private void process() {
-            System.debug('looping through rule ID: ' + this.rule.Id);
             List<String> booleanValues = new List<String>();
             for(ApexValidationRuleCriterion__mdt ruleCriterion : this.rule.ApexValidationRuleCriteria__r) {
-                System.debug('ruleCriterion=' + ruleCriterion);
                 ApexValidationRuleCriterionResult ruleCriterionResult = new ApexValidationRuleCriterionResult(this.record, ruleCriterion);
                 this.criteria.add(ruleCriterionResult.getCriterion());
                 booleanValues.add(String.valueOf(ruleCriterionResult.hasError));
-                //this.isInvalid = ruleCriterionResult.isInvalid;
-                //this.ruleCriteriaResults.add(ruleCriterionResult);
-
-
-                //if(ruleCriterionResult.hasError && String.isBlank(this.rule.CustomCriteriaLogic__c)) this.errorMessage = this.getErrorMessage();
-                //if(isInvalid) record.addError(this.rule.ErrorMessage__c);
-                //if(isInvalid) this.errorMessage = this.rule.ErrorMessage__c;
             }
             if(String.isBlank(this.rule.CustomCriteriaLogic__c)) return;
 
             this.criteriaLogic = String.format(this.getRuleCriteriaLogic(), booleanValues);
-            System.debug('criteriaLogic criteriaLogic=' + criteriaLogic);
             Boolean hasError = new BooleanExpression().evaluate(this.criteriaLogic);
-            System.debug('criteriaLogic hasError=' + hasError);
             if(hasError) this.errorMessage = this.getErrorMessage();
         }
 
@@ -325,10 +314,10 @@ public without sharing class ApexValidator {
 
     public class FieldPath {
 
-        private final String fieldPath;
-        private Schema.SObjectType sobjectType;
         private List<Schema.SObjectField> fieldChain;
-        private final Schema.DescribeFieldResult fieldDescribe;
+        private Schema.DescribeFieldResult fieldDescribe;
+        private String fieldPath;
+        private Schema.SObjectType sobjectType;
 
         public FieldPath(String sobjectApiName, String fieldPath) {
             Schema.SObjectType sobjectType = Schema.getGlobalDescribe().get(sobjectApiName);
@@ -364,29 +353,21 @@ public without sharing class ApexValidator {
         }
 
         public Object getValue(SObject record) {
-            // TODO Contact c= [select id, accountid, account.name from contact limit 1];
-            //System.debug(c.getSObject('Account').get('Name'));
-            // System.debug(c.getSObject(Schema.Contact.AccountId).get(Schema.Account.Name));
-            Schema.SObjectType sobjectType = this.sobjectType;
-            SObject parentRecord = record;
-    System.debug('this.fieldChain=' + this.fieldChain);
+            Schema.SObjectType parentSObjectType = this.sobjectType;
+            SObject parentRecord                 = record;
+
             for(Schema.SObjectField field : this.fieldChain) {
                 Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
-                String relationshipName = fieldDescribe.getRelationshipName();
-                System.debug('sobjectType=' + sobjectType);
-                System.debug('parentRecord=' + parentRecord);
-                System.debug('field=' + field);
-                System.debug('field.getDescribe().getSoapType()=' + field.getDescribe().getSoapType());
-                if(fieldDescribe.getSoapType() == Schema.SoapType.Id) {
-                    sobjectType = fieldDescribe.getReferenceTo()[0];
-                    SObject newParentRecord = parentRecord.getSObject(field);
-                    if(newParentRecord == null) {
-                        System.debug('newParentRecord is null, returning null value');
-                        return null;
-                    }
-                    else parentRecord = newParentRecord;
-                } else{
+                String relationshipName                  = fieldDescribe.getRelationshipName();
+
+                if(fieldDescribe.getSoapType() != Schema.SoapType.Id) {
                     return parentRecord.get(fieldDescribe.getName());
+                } else {
+                    parentSObjectType = fieldDescribe.getReferenceTo()[0];
+
+                    SObject newParentRecord = parentRecord.getSObject(field);
+                    if(newParentRecord == null) return null;
+                    else parentRecord = newParentRecord;
                 }
             }
 
@@ -410,11 +391,11 @@ public without sharing class ApexValidator {
 
                 Schema.SObjectField field = currentSObjectType.getDescribe().fields.getMap().get(fieldApiName);
 
-                if(i < lastFieldIndex) currentSObjectType = field.getDescribe().getReferenceTo()[0]; // TODO add support for polymorphic fields
+                // TODO add support for polymorphic fields
+                if(i < lastFieldIndex) currentSObjectType = field.getDescribe().getReferenceTo()[0];
 
                 fields.add(field);
             }
-            //return this.getLastFieldDescribe();
             return fields;
         }
 
