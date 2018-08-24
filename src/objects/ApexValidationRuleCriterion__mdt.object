@@ -13,16 +13,13 @@
         <unique>false</unique>
     </fields>
     <fields>
-        <fullName>Field__c</fullName>
+        <fullName>FieldPath__c</fullName>
         <externalId>false</externalId>
         <fieldManageability>SubscriberControlled</fieldManageability>
-        <label>Field</label>
-        <metadataRelationshipControllingField>ApexValidationRuleCriterion__mdt.SObjectType__c</metadataRelationshipControllingField>
-        <referenceTo>FieldDefinition</referenceTo>
-        <relationshipLabel>Apex Field Validation Rules</relationshipLabel>
-        <relationshipName>ApexFieldValidationRules</relationshipName>
+        <label>Field Path</label>
+        <length>255</length>
         <required>true</required>
-        <type>MetadataRelationship</type>
+        <type>Text</type>
         <unique>false</unique>
     </fields>
     <fields>
@@ -68,31 +65,6 @@
                 </value>
             </valueSetDefinition>
         </valueSet>
-    </fields>
-    <fields>
-        <fullName>ParentFieldPath__c</fullName>
-        <externalId>false</externalId>
-        <fieldManageability>DeveloperControlled</fieldManageability>
-        <inlineHelpText>For lookup &amp; master/detail fields, you can use this to validate the value of a parent field. Note that you must query for the parent fields before passing your records to the validator.
-
-Example for Contact: &apos;Account.Parent.RecordType.Name&apos;</inlineHelpText>
-        <label>Parent Field Path</label>
-        <length>255</length>
-        <required>false</required>
-        <type>Text</type>
-        <unique>false</unique>
-    </fields>
-    <fields>
-        <fullName>SObjectType__c</fullName>
-        <externalId>false</externalId>
-        <fieldManageability>SubscriberControlled</fieldManageability>
-        <label>SObject Type</label>
-        <referenceTo>EntityDefinition</referenceTo>
-        <relationshipLabel>Apex Field Validation Rules</relationshipLabel>
-        <relationshipName>ApexFieldValidationRules</relationshipName>
-        <required>true</required>
-        <type>MetadataRelationship</type>
-        <unique>false</unique>
     </fields>
     <fields>
         <fullName>SortOrder__c</fullName>
@@ -146,23 +118,5 @@ Example for Contact: &apos;Account.Parent.RecordType.Name&apos;</inlineHelpText>
     </fields>
     <label>Apex Validation Rule Criterion</label>
     <pluralLabel>Apex Validation Rule Criteria</pluralLabel>
-    <validationRules>
-        <fullName>Reference_Field_Path_Invalid</fullName>
-        <active>true</active>
-        <errorConditionFormula>AND(
-  LEFT(Field__r.DataType, 6) != &apos;Lookup&apos;,
-  NOT(ISBLANK(ParentFieldPath__c))
-)</errorConditionFormula>
-        <errorDisplayField>ParentFieldPath__c</errorDisplayField>
-        <errorMessage>Reference Field Path can only be used for Lookup &amp; Master/Detail relationship fields</errorMessage>
-    </validationRules>
-    <validationRules>
-        <fullName>SObjectTypesMismatch</fullName>
-        <active>true</active>
-        <description>SObject Type must match the Apex Validation Rule&apos;s SObject Type</description>
-        <errorConditionFormula>SObjectType__c != ApexValidationRule__r.SObjectType__c</errorConditionFormula>
-        <errorDisplayField>SObjectType__c</errorDisplayField>
-        <errorMessage>SObject Type must match the Apex Validation Rule&apos;s SObject Type</errorMessage>
-    </validationRules>
     <visibility>Public</visibility>
 </CustomObject>

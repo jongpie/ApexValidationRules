@@ -60,11 +60,9 @@
         <externalId>false</externalId>
         <fieldManageability>SubscriberControlled</fieldManageability>
         <label>SObject Type</label>
-        <referenceTo>EntityDefinition</referenceTo>
-        <relationshipLabel>Apex Validation Rules</relationshipLabel>
-        <relationshipName>ApexValidationRules</relationshipName>
+        <length>255</length>
         <required>true</required>
-        <type>MetadataRelationship</type>
+        <type>Text</type>
         <unique>false</unique>
     </fields>
     <label>Apex Validation Rule</label>

@@ -20,8 +20,6 @@ public without sharing class ApexValidator {
     }
 
     public List<ApexValidationRuleResult> getResults() {
-        System.debug('getResults');
-
         List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
         for(SObject record : this.records) {
             record.recalculateFormulas();
@@ -29,17 +27,14 @@ public without sharing class ApexValidator {
                 results.add(new ApexValidationRuleResult(record, rule));
             }
         }
-
         return results;
     }
 
     private List<ApexValidationRule__mdt> getRules() {
-        System.debug('getRules');
-        System.debug('String.valueOf(this.sobjectType)=' + String.valueOf(this.sobjectType));
         return [
             SELECT SObjectType__c, CriteriaLogicType__c, CustomCriteriaLogic__c, ErrorMessage__c,
                 (
-                    SELECT SObjectType__c, Field__c, Field__r.QualifiedApiName, Operator__c, ValueType__c, Value__c
+                    SELECT FieldPath__c, Operator__c, ValueType__c, Value__c
                     FROM ApexValidationRuleCriteria__r
                     ORDER BY SortOrder__c
                 ),
@@ -57,9 +52,9 @@ public without sharing class ApexValidator {
 
     private class ApexValidationRuleResult {
 
-        @AuraEnabled public String criteriaLogicType { get; private set; }
-        @AuraEnabled public String criteriaLogic     { get; private set; }
         @AuraEnabled public List<String> criteria    { get; private set; }
+        @AuraEnabled public String criteriaLogic     { get; private set; }
+        @AuraEnabled public String criteriaLogicType { get; private set; }
         @AuraEnabled public String errorMessage      { get; private set; }
         @AuraEnabled public Boolean hasError         { get { return !String.isBlank(this.errorMessage); } private set; }
         @AuraEnabled public Id recordId              { get { return this.record.Id; } private set; }
@@ -68,13 +63,12 @@ public without sharing class ApexValidator {
         private ApexValidationRule__mdt rule;
 
         public ApexValidationRuleResult(SObject record, ApexValidationRule__mdt rule) {
-            this.record        = record;
-            //this.recordId      = record.Id;
-            this.rule          = rule;
+            this.record = record;
+            this.rule   = rule;
 
+            this.criteria          = new List<String>();
+            this.criteriaLogic     = this.getRuleCriteriaLogic();
             this.criteriaLogicType = rule.CriteriaLogicType__c;
-            this.criteriaLogic = this.getRuleCriteriaLogic();
-            this.criteria = new List<String>();
 
             this.process();
         }
@@ -171,7 +165,7 @@ public without sharing class ApexValidator {
         }
 
         public String getCriterion() {
-            return this.ruleCriterion.Field__c
+            return this.ruleCriterion.FieldPath__c
                 + ' ' + this.ruleCriterion.Operator__c
                 + ' ' + this.getComparisonValue() + ' (' + this.ruleCriterion.ValueType__c + ')';
         }
@@ -179,7 +173,7 @@ public without sharing class ApexValidator {
         public Boolean getHasError() {
             if(this.ruleCriterion.ValueType__c == 'RegEx') return this.getHasRegExError();
 
-            Schema.SObjectField field = new FieldPath(this.sobjectApiName, this.ruleCriterion.Field__r.QualifiedApiName).getField();
+            Schema.SObjectField field = new FieldPath(this.sobjectApiName, this.ruleCriterion.FieldPath__c).getField();
 
             Object recordFieldValue = this.getFieldValue();
             Object comparisonValue  = this.getComparisonValue();
@@ -202,12 +196,11 @@ public without sharing class ApexValidator {
        }
 
         private Object getFieldValue() {
-            return new FieldPath(this.sobjectApiName, this.ruleCriterion.Field__r.QualifiedApiName).getValue(this.record);
+            return new FieldPath(this.sobjectApiName, this.ruleCriterion.FieldPath__c).getValue(this.record);
         }
 
         private Object getComparisonValue() {
             switch on this.ruleCriterion.ValueType__c {
-                // TODO add support for field paths
                 when 'Field Value'  { return new FieldPath(this.sobjectApiName, this.ruleCriterion.Value__c).getValue(this.record); }
                 when 'Static Value' { return this.ruleCriterion.Value__c; }
                 when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
