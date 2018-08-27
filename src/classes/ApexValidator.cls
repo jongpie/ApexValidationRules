@@ -41,7 +41,7 @@ public without sharing class ApexValidator {
 
                 if(shouldThrowException && ruleResult.hasError) throw new ApexValidatorException(ruleResult.errorMessage);
 
-                results.add(apexValidationRuleResult);
+                results.add(ruleResult);
             }
         }
         return results;
