@@ -19,12 +19,29 @@ public without sharing class ApexValidator {
         this.rules = this.getRules();
     }
 
+    public ApexValidator setRules(List<ApexValidationRule__mdt> rules) {
+        this.rules = this.queryRules(rules);
+        return this;
+    }
+
     public List<ApexValidationRuleResult> getResults() {
+        return this.validate(false);
+    }
+
+    public List<ApexValidationRuleResult> validate() {
+        return this.validate(true);
+    }
+
+    private List<ApexValidationRuleResult> validate(Boolean shouldThrowException) {
         List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
         for(SObject record : this.records) {
             record.recalculateFormulas();
             for(ApexValidationRule__mdt rule : this.rules) {
-                results.add(new ApexValidationRuleResult(record, rule));
+                ApexValidationRuleResult ruleResult = new ApexValidationRuleResult(record, rule);
+
+                if(shouldThrowException && ruleResult.hasError) throw new ApexValidatorException(ruleResult.errorMessage);
+
+                results.add(apexValidationRuleResult);
             }
         }
         return results;
@@ -48,7 +65,25 @@ public without sharing class ApexValidator {
         ];
     }
 
-    private class ApexValidatorException extends Exception {}
+    private List<ApexValidationRule__mdt> queryRules(List<ApexValidationRule__mdt> rules) {
+        return [
+            SELECT SObjectType__c, CriteriaLogicType__c, CustomCriteriaLogic__c, ErrorMessage__c,
+                (
+                    SELECT FieldPath__c, Operator__c, ValueType__c, Value__c
+                    FROM ApexValidationRuleCriteria__r
+                    ORDER BY SortOrder__c
+                ),
+                (
+                    SELECT Language__c, ErrorMessage__c
+                    FROM ApexValidationRuleTranslations__r
+                )
+            FROM ApexValidationRule__mdt
+            WHERE SObjectType__c = :String.valueOf(this.sobjectType)
+            AND Id IN :rules
+        ];
+    }
+
+    public class ApexValidatorException extends Exception {}
 
     private class ApexValidationRuleResult {
 
@@ -80,7 +115,7 @@ public without sharing class ApexValidator {
                 this.criteria.add(ruleCriterionResult.getCriterion());
                 booleanValues.add(String.valueOf(ruleCriterionResult.hasError));
             }
-            if(String.isBlank(this.rule.CustomCriteriaLogic__c)) return;
+            //if(String.isBlank(this.rule.CustomCriteriaLogic__c)) return;
 
             this.criteriaLogic = String.format(this.getRuleCriteriaLogic(), booleanValues);
             Boolean hasError = new BooleanExpression().evaluate(this.criteriaLogic);
@@ -98,19 +133,21 @@ public without sharing class ApexValidator {
         }
 
         private String getRuleCriteriaLogic() {
+            String criteriaLogic = String.isBlank(this.rule.CustomCriteriaLogic__c) ? '' : this.rule.CustomCriteriaLogic__c;
+
             if(this.rule.CriteriaLogicType__c != 'Custom') {
                 List<String> standardLogicPieces = new List<String>();
                 for(Integer i = 0; i < this.rule.ApexValidationRuleCriteria__r.size(); i++) {
-                    standardLogicPieces.add(' {' + String.valueOf(i) + '} ');
+                    standardLogicPieces.add(String.valueOf(i + 1));
                 }
-                return String.join(standardLogicPieces, this.rule.CriteriaLogicType__c);
+                criteriaLogic = '(' + String.join(standardLogicPieces, ' ' + this.rule.CriteriaLogicType__c + ' ') + ')';
             }
 
             List<String> parsedCharacters = new List<String>();
             Boolean hasFoundNumbers = false;
             String foundNumberString = '';
 
-            for(String character : this.rule.CustomCriteriaLogic__c.split('')) {
+            for(String character : criteriaLogic.split('')) {
                 if(!character.isNumeric() && !hasFoundNumbers) {
                     parsedCharacters.add(character);
                 } else if(!character.isNumeric() && hasFoundNumbers){
