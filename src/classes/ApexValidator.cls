@@ -226,9 +226,9 @@ public without sharing class ApexValidator {
 
         private Object getComparisonValue() {
             switch on this.ruleCriterion.ValueType__c {
-                when 'Field Value'  { return new FieldPath(this.sobjectApiName, this.ruleCriterion.Value__c).getValue(this.record); }
-                when 'Static Value' { return this.ruleCriterion.Value__c; }
-                when else           { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
+                when 'Field' { return new FieldPath(this.sobjectApiName, this.ruleCriterion.Value__c).getValue(this.record); }
+                when 'Value' { return this.ruleCriterion.Value__c; }
+                when else    { throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value'); }
             }
         }
 

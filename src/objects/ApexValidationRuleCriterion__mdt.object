@@ -89,14 +89,14 @@
             <valueSetDefinition>
                 <sorted>false</sorted>
                 <value>
-                    <fullName>Static Value</fullName>
+                    <fullName>Value</fullName>
                     <default>false</default>
-                    <label>Static Value</label>
+                    <label>Value</label>
                 </value>
                 <value>
-                    <fullName>Field Value</fullName>
+                    <fullName>Field</fullName>
                     <default>false</default>
-                    <label>Field Value</label>
+                    <label>Field</label>
                 </value>
                 <value>
                     <fullName>RegEx</fullName>
