@@ -23,7 +23,7 @@
     <fields>
         <fullName>Language__c</fullName>
         <externalId>false</externalId>
-        <fieldManageability>DeveloperControlled</fieldManageability>
+        <fieldManageability>SubscriberControlled</fieldManageability>
         <label>Language</label>
         <required>true</required>
         <type>Picklist</type>
