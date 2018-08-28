@@ -203,15 +203,25 @@ public without sharing class ApexValidator {
             Object recordFieldValue = this.getFieldValue();
             Object comparisonValue  = this.getComparisonValue();
 
-            switch on field.getDescribe().getSoapType() {
-                when Boolean  { return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue)); }
-                when Date     { return this.compareDate(Date.valueOf(recordFieldValue), Date.valueOf(comparisonValue)); }
-                when Datetime { return this.compareDatetime(Datetime.valueOf(recordFieldValue), Datetime.valueOf(comparisonValue)); }
-                when Double   { return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue)); }
-                when Id       { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
-                when Integer  { return this.compareInteger(Integer.valueOf(recordFieldValue), Integer.valueOf(comparisonValue)); }
-                when String   { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
-                when else     { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
+            switch on field.getDescribe().getType() {
+                when Boolean        { return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue)); }
+                when Combobox       { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Currency       { return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue)); }
+                when Date           { return this.compareDate(Date.valueOf(recordFieldValue), Date.valueOf(comparisonValue)); }
+                when Datetime       { return this.compareDatetime(Datetime.valueOf(recordFieldValue), Datetime.valueOf(comparisonValue)); }
+                when Double         { return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue)); }
+                when Email          { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Id             { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Integer        { return this.compareInteger(Integer.valueOf(recordFieldValue), Integer.valueOf(comparisonValue)); }
+                when MultiPicklist  { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Percent        { return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue)); }
+                when Phone          { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Picklist       { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Reference      { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when String         { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when TextArea       { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when Url            { return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue)); }
+                when else           { throw new ApexValidatorException('Unknown operator: ' + this.ruleCriterion.Operator__c); }
             }
         }
 
