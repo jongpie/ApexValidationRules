@@ -116,9 +116,9 @@ public without sharing class ApexValidator {
                 booleanValues.add(String.valueOf(ruleCriterionResult.hasError));
             }
 
-            this.criteriaLogic = String.format(this.getRuleCriteriaLogic(), booleanValues);
+            String parsedCriteriaLogic = String.format(this.getRuleCriteriaLogic(), booleanValues);
 
-            Boolean hasError = new BooleanExpression().evaluate(this.criteriaLogic);
+            Boolean hasError = new BooleanExpression().evaluate(parsedCriteriaLogic);
             if(hasError) this.errorMessage = this.getErrorMessage();
         }
 
