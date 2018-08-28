@@ -15,12 +15,10 @@ public without sharing class ApexValidator {
     public ApexValidator(List<SObject> records) {
         this.records     = records;
         this.sobjectType = records[0].getSObjectType();
-
-        this.rules = this.getRules();
     }
 
     public ApexValidator setRules(List<ApexValidationRule__mdt> rules) {
-        this.rules = this.queryRules(rules);
+        this.rules = this.getRules(rules);
         return this;
     }
 
@@ -33,6 +31,8 @@ public without sharing class ApexValidator {
     }
 
     private List<ApexValidationRuleResult> validate(Boolean shouldThrowException) {
+        if(this.rules == null) this.rules = this.getRules();
+
         List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
         for(SObject record : this.records) {
             record.recalculateFormulas();
@@ -65,7 +65,7 @@ public without sharing class ApexValidator {
         ];
     }
 
-    private List<ApexValidationRule__mdt> queryRules(List<ApexValidationRule__mdt> rules) {
+    private List<ApexValidationRule__mdt> getRules(List<ApexValidationRule__mdt> rules) {
         return [
             SELECT SObjectType__c, CriteriaLogicType__c, CustomCriteriaLogic__c, ErrorMessage__c,
                 (
@@ -115,9 +115,9 @@ public without sharing class ApexValidator {
                 this.criteria.add(ruleCriterionResult.getCriterion());
                 booleanValues.add(String.valueOf(ruleCriterionResult.hasError));
             }
-            //if(String.isBlank(this.rule.CustomCriteriaLogic__c)) return;
 
             this.criteriaLogic = String.format(this.getRuleCriteriaLogic(), booleanValues);
+
             Boolean hasError = new BooleanExpression().evaluate(this.criteriaLogic);
             if(hasError) this.errorMessage = this.getErrorMessage();
         }
@@ -169,7 +169,6 @@ public without sharing class ApexValidator {
                     parsedCharacters.add(character);
                 }
             }
-
             return String.join(parsedCharacters, '').toUpperCase();
         }
 
@@ -317,8 +316,7 @@ public without sharing class ApexValidator {
             if(x.contains('||')) {
                 String p1 = x.split('\\|\\|', 2)[0];
                 String p2 = x.split('\\|\\|', 2)[1];
-                System.debug('p1=' + p1);
-                System.debug('p2=' + p2);
+
                 return orJoin(p1, p2);
             }
             if(x.startsWith('!')) return !evaluate(x.substring(1));
