@@ -5,7 +5,7 @@
 public without sharing class ApexValidator {
 
     private List<SObject> records;
-    List<ApexValidationRule__mdt> rules;
+    private List<ApexValidationRule__mdt> rules;
     private Schema.SObjectType sobjectType;
 
     public ApexValidator(SObject record) {
@@ -441,6 +441,7 @@ public without sharing class ApexValidator {
 
                 fields.add(field);
             }
+
             return fields;
         }
 
