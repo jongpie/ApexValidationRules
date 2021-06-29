@@ -1,0 +1,66 @@
+{
+    "name": "apex-validation-rules",
+    "version": "0.9.0",
+    "description": "An Apex library for making code-based validations configurable via custom metadata types",
+    "scripts": {
+        "lint": "npm run lint:lwc && npm run lint:aura",
+        "lint:aura": "eslint **/aura/**",
+        "lint:lwc": "eslint **/lwc/**",
+        "push": "sfdx force:source:push",
+        "prettier": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
+        "prettier:verify": "prettier --list-different \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
+        "test:apex": "sfdx force:apex:test:run --testlevel RunLocalTests --wait 30 --resultformat human --codecoverage --outputdir ./tests/apex"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jongpie/ApexValidationRules.git"
+    },
+    "keywords": [
+        "apex",
+        "apex-validation-rules",
+        "salesforce",
+        "salesforce-apex",
+        "salesforce-lightning",
+        "salesforce-validation-rules",
+        "validation-rules"
+    ],
+    "author": "Jonathan Gillespie",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/jongpie/ApexValidationRules/issues"
+    },
+    "homepage": "https://github.com/jongpie/ApexValidationRules#readme",
+    "engines": {
+        "node": ">= 12.18.0",
+        "npm": ">= 6.14.0"
+    },
+    "devDependencies": {
+        "@cparra/apexdocs": "latest",
+        "@prettier/plugin-xml": "latest",
+        "@salesforce/eslint-config-lwc": "latest",
+        "@salesforce/eslint-plugin-aura": "latest",
+        "@salesforce/sfdx-lwc-jest": "latest",
+        "@salesforce/sfdx-scanner": "latest",
+        "eslint": "latest",
+        "eslint-config-prettier": "latest",
+        "husky": "latest",
+        "lint-staged": "latest",
+        "prettier": "latest",
+        "prettier-plugin-apex": "latest",
+        "pwsh": "latest"
+    },
+    "dependencies": {},
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}": [
+            "prettier --write"
+        ],
+        "**/{aura|lwc}/**": [
+            "eslint"
+        ]
+    }
+}
