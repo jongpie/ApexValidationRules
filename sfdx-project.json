@@ -1,0 +1,12 @@
+{
+  "packageDirectories": [
+    {
+      "path": "apex-validation-rules",
+      "default": true
+    }
+  ],
+  "name": "ApexValidationRules",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "52.0"
+}
