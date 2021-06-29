@@ -13,3 +13,16 @@ This is useful in scenarios where standard validation rules cannot be used
 
 1. On-demand validation: standard validation rules only run on upserted records. Apex Validation Rules can be executed at any point in your code.
 2. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes
+
+## Examples
+
+### Simple Example: Validating Account Name
+
+![Example Validation Rule: Account Name](./assets/validation-rule-example-account-name.png)
+
+```java
+    Account someAccount = new Account(Name = 'Some Account');
+    new ApexValidator(someAccount).validate();
+```
+
+![Example Validation Rule: Account Name Exception](./assets/validation-rule-example-account-name-exception.png)

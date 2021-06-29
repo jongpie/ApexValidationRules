@@ -33,7 +33,7 @@ private class ApexValidatorTest {
     }
 
     @isTest
-    static void it_should_return_validation_results_for_a_single_record() {
+    static void returnValidationResultsForASingleRecord() {
         String accountName = 'Some account';
         Account account = createMockAccount();
         account.Name = accountName;
