@@ -1,11 +1,11 @@
 /*****************************************************************************************************
  * This file is part of the Apex Validation Rules project, released under the MIT License.            *
- * See LICENSE file or go to https://github.com/jongpie/ApexValidationRules for full license details. *
+ * See LICENSE file or go to https://github.com/jongpie/RecordValidationRules for full license details. *
  *****************************************************************************************************/
 public without sharing class RecordValidator {
     private static final List<String> RULE_DEVELOPER_NAMES = new List<String>();
-    private static final Map<String, ApexValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, ApexValidationRule__mdt>();
-    private static final Map<String, List<ApexValidationRuleCondition__mdt>> CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<ApexValidationRuleCondition__mdt>>();
+    private static final Map<String, RecordValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
+    private static final Map<String, List<RecordValidationRuleCondition__mdt>> CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleCondition__mdt>>();
 
     private List<SObject> records;
     private Schema.SObjectType sobjectType;
@@ -20,26 +20,26 @@ public without sharing class RecordValidator {
         this.sobjectType = records.get(0).getSObjectType();
     }
 
-    public RecordValidator setRule(ApexValidationRule__mdt rule) {
+    public RecordValidator setRule(RecordValidationRule__mdt rule) {
         this.rulesProvided = true;
-        return this.setRule(rule, rule.ApexValidationRuleConditions__r);
+        return this.setRule(rule, rule.RecordValidationRuleConditions__r);
     }
 
-    public RecordValidator setRule(ApexValidationRule__mdt rule, List<ApexValidationRuleCondition__mdt> conditions) {
+    public RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
         RULE_DEVELOPER_NAMES.add(rule.DeveloperName);
         RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
         CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
         return this;
     }
 
-    public RecordValidator setRules(List<ApexValidationRule__mdt> rules) {
-        for (ApexValidationRule__mdt rule : rules) {
+    public RecordValidator setRules(List<RecordValidationRule__mdt> rules) {
+        for (RecordValidationRule__mdt rule : rules) {
             this.setRule(rule);
         }
         return this;
     }
 
-    public List<ApexValidationRuleResult> getResults() {
+    public List<ValidationRuleResult> getResults() {
         return this.validate(false);
     }
 
@@ -47,11 +47,11 @@ public without sharing class RecordValidator {
         this.validate(true);
     }
 
-    private List<ApexValidationRuleCondition__mdt> getConditions(String ruleDeveloperName) {
+    private List<RecordValidationRuleCondition__mdt> getConditions(String ruleDeveloperName) {
         return CONDITIONS_BY_RULE_DEVELOPER_NAME.get(ruleDeveloperName);
     }
 
-    private List<ApexValidationRuleResult> validate(Boolean shouldThrowException) {
+    private List<ValidationRuleResult> validate(Boolean shouldThrowException) {
         if (RULES_BY_DEVELOPER_NAME.isEmpty() == true && rulesProvided == false) {
             this.loadConfiguredRules();
         }
@@ -61,13 +61,13 @@ public without sharing class RecordValidator {
             throw new RecordValidatorException('No rules provided or configured, cannot validate');
         }
 
-        List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
+        List<ValidationRuleResult> results = new List<ValidationRuleResult>();
         for (SObject record : this.records) {
             record.recalculateFormulas();
             for (String ruleDeveloperName : RULE_DEVELOPER_NAMES) {
-                ApexValidationRule__mdt rule = RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
-                List<ApexValidationRuleCondition__mdt> ruleConditions = CONDITIONS_BY_RULE_DEVELOPER_NAME.get(rule.DeveloperName);
-                ApexValidationRuleResult ruleResult = new ApexValidationRuleResult(record, rule, ruleConditions);
+                RecordValidationRule__mdt rule = RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
+                List<RecordValidationRuleCondition__mdt> ruleConditions = CONDITIONS_BY_RULE_DEVELOPER_NAME.get(rule.DeveloperName);
+                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions);
 
                 if (shouldThrowException == true && ruleResult.hasError == true) {
                     throw new RecordValidatorException(ruleResult.errorMessage);
@@ -81,16 +81,16 @@ public without sharing class RecordValidator {
 
     // Private methods
     private void loadConfiguredRules() {
-        List<ApexValidationRule__mdt> configuredRules = [
+        List<RecordValidationRule__mdt> configuredRules = [
             SELECT
                 DeveloperName,
                 SObjectType__c,
                 ConditionLogicType__c,
                 CustomConditionLogic__c,
                 ErrorMessage__c,
-                (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM ApexValidationRuleConditions__r ORDER BY SortOrder__c),
-                (SELECT Language__c, ErrorMessage__c FROM ApexValidationRuleTranslations__r)
-            FROM ApexValidationRule__mdt
+                (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM RecordValidationRuleConditions__r ORDER BY SortOrder__c)
+                // (SELECT Language__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
+            FROM RecordValidationRule__mdt
             WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
         ];
         this.setRules(configuredRules);
@@ -99,7 +99,7 @@ public without sharing class RecordValidator {
     public class RecordValidatorException extends Exception {
     }
 
-    public class ApexValidationRuleResult {
+    public class ValidationRuleResult {
         @AuraEnabled
         public List<String> conditions { get; private set; }
         @AuraEnabled
@@ -124,10 +124,10 @@ public without sharing class RecordValidator {
         }
 
         private SObject record;
-        private ApexValidationRule__mdt rule;
-        private List<ApexValidationRuleCondition__mdt> ruleConditions;
+        private RecordValidationRule__mdt rule;
+        private List<RecordValidationRuleCondition__mdt> ruleConditions;
 
-        public ApexValidationRuleResult(SObject record, ApexValidationRule__mdt rule, List<ApexValidationRuleCondition__mdt> ruleConditions) {
+        public ValidationRuleResult(SObject record, RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> ruleConditions) {
             this.record = record;
             this.rule = rule;
             this.ruleConditions = ruleConditions;
@@ -141,8 +141,8 @@ public without sharing class RecordValidator {
 
         private void process() {
             List<String> booleanValues = new List<String>();
-            for (ApexValidationRuleCondition__mdt ruleCondition : this.ruleConditions) {
-                ApexValidationRuleConditionResult ruleConditionResult = new ApexValidationRuleConditionResult(this.record, ruleCondition);
+            for (RecordValidationRuleCondition__mdt ruleCondition : this.ruleConditions) {
+                ValidationRuleConditionResult ruleConditionResult = new ValidationRuleConditionResult(this.record, ruleCondition);
                 this.conditions.add(ruleConditionResult.getCondition());
                 booleanValues.add(String.valueOf(ruleConditionResult.hasError));
             }
@@ -157,15 +157,15 @@ public without sharing class RecordValidator {
         }
 
         private String getErrorMessage() {
-            if (this.rule.ApexValidationRuleTranslations__r.isEmpty() == true) {
-                return this.rule.ErrorMessage__c;
-            }
+            // if (this.rule.RecordValidationRuleTranslations__r.isEmpty() == true) {
+                // return this.rule.ErrorMessage__c;
+            // }
 
-            for (ApexValidationRuleTranslation__mdt translation : this.rule.ApexValidationRuleTranslations__r) {
-                if (translation.Language__c == UserInfo.getLanguage()) {
-                    return translation.ErrorMessage__c;
-                }
-            }
+            // for (RecordValidationRuleTranslation__mdt translation : this.rule.RecordValidationRuleTranslations__r) {
+            //     if (translation.Language__c == UserInfo.getLanguage()) {
+            //         return translation.ErrorMessage__c;
+            //     }
+            // }
 
             return this.rule.ErrorMessage__c;
         }
@@ -211,13 +211,13 @@ public without sharing class RecordValidator {
         }
     }
 
-    private class ApexValidationRuleConditionResult {
+    private class ValidationRuleConditionResult {
         private Boolean hasError;
         private SObject record;
-        private ApexValidationRuleCondition__mdt ruleCondition;
+        private RecordValidationRuleCondition__mdt ruleCondition;
         private String sobjectApiName;
 
-        private ApexValidationRuleConditionResult(SObject record, ApexValidationRuleCondition__mdt ruleCondition) {
+        private ValidationRuleConditionResult(SObject record, RecordValidationRuleCondition__mdt ruleCondition) {
             this.record = record;
             this.ruleCondition = ruleCondition;
             this.sobjectApiName = this.record.getSObjectType().getDescribe().getName();

@@ -4,8 +4,8 @@
  *****************************************************************************************************/
 @isTest
 private class RecordValidatorTest {
-    static ApexValidationRule__mdt createMockRule(String developerName, SObjectType sobjectType) {
-        return new ApexValidationRule__mdt(
+    static RecordValidationRule__mdt createMockRule(String developerName, SObjectType sobjectType) {
+        return new RecordValidationRule__mdt(
             ConditionLogicType__c = 'AND',
             CustomConditionLogic__c = null,
             DeveloperName = developerName,
@@ -15,8 +15,8 @@ private class RecordValidatorTest {
         );
     }
 
-    static ApexValidationRuleCondition__mdt createMockRuleCondition(String developerName, String fieldPath, String operator, String valueType, String value) {
-        return new ApexValidationRuleCondition__mdt(
+    static RecordValidationRuleCondition__mdt createMockRuleCondition(String developerName, String fieldPath, String operator, String valueType, String value) {
+        return new RecordValidationRuleCondition__mdt(
             DeveloperName = developerName,
             FieldPath__c = fieldPath,
             Operator__c = operator,
@@ -38,15 +38,15 @@ private class RecordValidatorTest {
         Account account = createMockAccount();
         account.Name = accountName;
 
-        ApexValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        ApexValidationRuleCondition__mdt condition = createMockRuleCondition('some_condition', 'Name', '==', 'Value', accountName);
+        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('some_condition', 'Name', '==', 'Value', accountName);
 System.debug('condition==' + condition);
 
-        RecordValidator validator = new RecordValidator(account).setRule(rule, new List<ApexValidationRuleCondition__mdt>{ condition });
-        List<RecordValidator.ApexValidationRuleResult> results = validator.getResults();
+        RecordValidator validator = new RecordValidator(account).setRule(rule, new List<RecordValidationRuleCondition__mdt>{ condition });
+        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
-        RecordValidator.ApexValidationRuleResult result = results.get(0);
+        RecordValidator.ValidationRuleResult result = results.get(0);
         System.assertEquals(true, result.hasError, result);
     }
 }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>ApexValidationRule__c</fullName>
+    <fullName>RecordValidationRule__c</fullName>
     <externalId>false</externalId>
     <fieldManageability>SubscriberControlled</fieldManageability>
-    <label>Apex Validation Rule</label>
-    <referenceTo>ApexValidationRule__mdt</referenceTo>
-    <relationshipLabel>Apex Validation Rule Translations</relationshipLabel>
-    <relationshipName>ApexValidationRuleTranslations</relationshipName>
+    <label>Record Validation Rule</label>
+    <referenceTo>RecordValidationRule__mdt</referenceTo>
+    <relationshipLabel>Record Validation Rule Conditions</relationshipLabel>
+    <relationshipName>RecordValidationRuleConditions</relationshipName>
     <required>true</required>
     <type>MetadataRelationship</type>
     <unique>false</unique>

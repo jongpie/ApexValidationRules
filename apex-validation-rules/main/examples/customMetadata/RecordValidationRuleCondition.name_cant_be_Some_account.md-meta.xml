@@ -7,7 +7,7 @@
     <label>name cant be Some account</label>
     <protected>false</protected>
     <values>
-        <field>ApexValidationRule__c</field>
+        <field>RecordValidationRule__c</field>
         <value xsi:type="xsd:string">Account_name</value>
     </values>
     <values>

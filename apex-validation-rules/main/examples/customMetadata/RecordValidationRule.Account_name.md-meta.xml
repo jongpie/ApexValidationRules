@@ -11,7 +11,7 @@
         <value xsi:type="xsd:string">AND</value>
     </values>
     <values>
-        <field>CriteriaLogicType__c</field>
+        <field>ConditionLogicType__c</field>
         <value xsi:type="xsd:string">AND</value>
     </values>
     <values>
@@ -19,7 +19,7 @@
         <value xsi:nil="true" />
     </values>
     <values>
-        <field>CustomCriteriaLogic__c</field>
+        <field>CustomConditionLogic__c</field>
         <value xsi:nil="true" />
     </values>
     <values>

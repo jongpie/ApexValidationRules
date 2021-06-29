@@ -6,7 +6,7 @@
 
 An Apex library for validating field values on `SObject` records, using configurable custom metadata types
 
-1. Create validation rules via `ApexValidationRule__mdt` custom metadata type
+1. Create validation rules via `RecordValidationRule__mdt` custom metadata type
 2. Call `RecordValidator` class in your trigger handler or class to validate the your records pass your validation rules
 
 This is useful in scenarios where standard validation rules cannot be used
