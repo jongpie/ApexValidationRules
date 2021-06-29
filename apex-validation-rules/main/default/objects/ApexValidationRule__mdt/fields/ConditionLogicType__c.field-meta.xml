@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>CriteriaLogicType__c</fullName>
+    <fullName>ConditionLogicType__c</fullName>
     <externalId>false</externalId>
     <fieldManageability>SubscriberControlled</fieldManageability>
-    <label>Criteria Logic Type</label>
+    <label>Conditions Logic Type</label>
     <required>true</required>
     <type>Picklist</type>
     <valueSet>
@@ -13,12 +13,12 @@
             <value>
                 <fullName>AND</fullName>
                 <default>true</default>
-                <label>All Criteria Must Be Met (AND)</label>
+                <label>All Conditions Must Be Met (AND)</label>
             </value>
             <value>
                 <fullName>OR</fullName>
                 <default>false</default>
-                <label>Any Criteria Must Be Met (OR)</label>
+                <label>Any Conditions Must Be Met (OR)</label>
             </value>
             <value>
                 <fullName>Custom</fullName>

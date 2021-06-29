@@ -5,8 +5,8 @@
     <fieldManageability>SubscriberControlled</fieldManageability>
     <label>Apex Validation Rule</label>
     <referenceTo>ApexValidationRule__mdt</referenceTo>
-    <relationshipLabel>Apex Validation Rule Criteria</relationshipLabel>
-    <relationshipName>ApexValidationRuleCriteria</relationshipName>
+    <relationshipLabel>Apex Validation Rule Conditions</relationshipLabel>
+    <relationshipName>ApexValidationRuleConditions</relationshipName>
     <required>true</required>
     <type>MetadataRelationship</type>
     <unique>false</unique>

@@ -54,17 +54,17 @@
         <customLabel>true</customLabel>
         <detailHeading>true</detailHeading>
         <editHeading>true</editHeading>
-        <label>Criteria Settings</label>
+        <label>Conditions Settings</label>
         <layoutColumns>
             <layoutItems>
                 <behavior>Required</behavior>
-                <field>CriteriaLogicType__c</field>
+                <field>ConditionLogicType__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>CustomCriteriaLogic__c</field>
+                <field>CustomConditionLogic__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsLeftToRight</style>
@@ -106,7 +106,7 @@
         <fields>Operator__c</fields>
         <fields>ValueType__c</fields>
         <fields>Value__c</fields>
-        <relatedList>ApexValidationRuleCriterion__mdt.ApexValidationRule__c</relatedList>
+        <relatedList>ApexValidationRuleCondition__mdt.ApexValidationRule__c</relatedList>
         <sortField>SortOrder__c</sortField>
         <sortOrder>Asc</sortOrder>
     </relatedLists>

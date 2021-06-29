@@ -5,8 +5,8 @@
     <columns>DeveloperName</columns>
     <columns>SObjectType__c</columns>
     <columns>IsActive__c</columns>
-    <columns>CriteriaLogicType__c</columns>
-    <columns>CustomCriteriaLogic__c</columns>
+    <columns>ConditionLogicType__c</columns>
+    <columns>CustomConditionLogic__c</columns>
     <columns>ErrorMessage__c</columns>
     <filterScope>Everything</filterScope>
     <label>All</label>

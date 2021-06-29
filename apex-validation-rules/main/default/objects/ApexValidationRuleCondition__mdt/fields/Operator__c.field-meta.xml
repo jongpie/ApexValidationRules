@@ -33,12 +33,12 @@
             <value>
                 <fullName>&lt;=</fullName>
                 <default>false</default>
-                <label>less or equal</label>
+                <label>less than or equal to</label>
             </value>
             <value>
                 <fullName>&gt;=</fullName>
                 <default>false</default>
-                <label>greater or equal</label>
+                <label>greater than or equal to</label>
             </value>
         </valueSetDefinition>
     </valueSet>
