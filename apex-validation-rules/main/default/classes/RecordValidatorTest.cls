@@ -3,7 +3,7 @@
  * See LICENSE file or go to https://github.com/jongpie/ApexValidationRules for full license details. *
  *****************************************************************************************************/
 @isTest
-private class ApexValidatorTest {
+private class RecordValidatorTest {
     static ApexValidationRule__mdt createMockRule(String developerName, SObjectType sobjectType) {
         return new ApexValidationRule__mdt(
             ConditionLogicType__c = 'AND',
@@ -42,11 +42,11 @@ private class ApexValidatorTest {
         ApexValidationRuleCondition__mdt condition = createMockRuleCondition('some_condition', 'Name', '==', 'Value', accountName);
 System.debug('condition==' + condition);
 
-        ApexValidator validator = new ApexValidator(account).setRule(rule, new List<ApexValidationRuleCondition__mdt>{ condition });
-        List<ApexValidator.ApexValidationRuleResult> results = validator.getResults();
+        RecordValidator validator = new RecordValidator(account).setRule(rule, new List<ApexValidationRuleCondition__mdt>{ condition });
+        List<RecordValidator.ApexValidationRuleResult> results = validator.getResults();
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
-        ApexValidator.ApexValidationRuleResult result = results.get(0);
+        RecordValidator.ApexValidationRuleResult result = results.get(0);
         System.assertEquals(true, result.hasError, result);
     }
 }

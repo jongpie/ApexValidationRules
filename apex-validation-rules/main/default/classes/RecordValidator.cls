@@ -2,7 +2,7 @@
  * This file is part of the Apex Validation Rules project, released under the MIT License.            *
  * See LICENSE file or go to https://github.com/jongpie/ApexValidationRules for full license details. *
  *****************************************************************************************************/
-public without sharing class ApexValidator {
+public without sharing class RecordValidator {
     // TODO re-add sorted list for rules based on SortOrder__c field
     private static final Map<String, ApexValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, ApexValidationRule__mdt>();
     private static final Map<String, List<ApexValidationRuleCondition__mdt>> CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<ApexValidationRuleCondition__mdt>>();
@@ -11,27 +11,27 @@ public without sharing class ApexValidator {
     private Schema.SObjectType sobjectType;
     private Boolean rulesProvided = false;
 
-    public ApexValidator(SObject record) {
+    public RecordValidator(SObject record) {
         this(new List<SObject>{ record });
     }
 
-    public ApexValidator(List<SObject> records) {
+    public RecordValidator(List<SObject> records) {
         this.records = records;
         this.sobjectType = records.get(0).getSObjectType();
     }
 
-    public ApexValidator setRule(ApexValidationRule__mdt rule) {
+    public RecordValidator setRule(ApexValidationRule__mdt rule) {
         this.rulesProvided = true;
         return this.setRule(rule, rule.ApexValidationRuleConditions__r);
     }
 
-    public ApexValidator setRule(ApexValidationRule__mdt rule, List<ApexValidationRuleCondition__mdt> conditions) {
+    public RecordValidator setRule(ApexValidationRule__mdt rule, List<ApexValidationRuleCondition__mdt> conditions) {
         RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
         CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
         return this;
     }
 
-    public ApexValidator setRules(List<ApexValidationRule__mdt> rules) {
+    public RecordValidator setRules(List<ApexValidationRule__mdt> rules) {
         for (ApexValidationRule__mdt rule : rules) {
             this.setRule(rule);
         }
@@ -57,7 +57,7 @@ public without sharing class ApexValidator {
 
         // If there aren't any rules loaded or provided, then something isn't right
         if (shouldThrowException == true && RULES_BY_DEVELOPER_NAME.isEmpty() == true) {
-            throw new ApexValidatorException('No rules provided or configured, cannot validate');
+            throw new RecordValidatorException('No rules provided or configured, cannot validate');
         }
 
         List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
@@ -68,7 +68,7 @@ public without sharing class ApexValidator {
                 ApexValidationRuleResult ruleResult = new ApexValidationRuleResult(record, rule, ruleConditions);
 
                 if (shouldThrowException == true && ruleResult.hasError == true) {
-                    throw new ApexValidatorException(ruleResult.errorMessage);
+                    throw new RecordValidatorException(ruleResult.errorMessage);
                 }
 
                 results.add(ruleResult);
@@ -94,7 +94,7 @@ public without sharing class ApexValidator {
         this.setRules(configuredRules);
     }
 
-    public class ApexValidatorException extends Exception {
+    public class RecordValidatorException extends Exception {
     }
 
     public class ApexValidationRuleResult {
@@ -297,7 +297,7 @@ public without sharing class ApexValidator {
                     return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -320,7 +320,7 @@ public without sharing class ApexValidator {
                     return this.ruleCondition.Value__c;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown Value Type, cannot parse comparison value');
+                    throw new RecordValidatorException('Unknown Value Type, cannot parse comparison value');
                 }
             }
         }
@@ -334,7 +334,7 @@ public without sharing class ApexValidator {
                     return recordFieldValue != comparisonValue;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -360,7 +360,7 @@ public without sharing class ApexValidator {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -386,7 +386,7 @@ public without sharing class ApexValidator {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -412,7 +412,7 @@ public without sharing class ApexValidator {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -438,7 +438,7 @@ public without sharing class ApexValidator {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -464,7 +464,7 @@ public without sharing class ApexValidator {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new ApexValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
                 }
             }
         }

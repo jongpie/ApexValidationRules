@@ -7,7 +7,7 @@
 An Apex library for making code-based validations configurable via custom metadata types
 
 1. Create validation rules via ApexValidationRule\_\_mdt custom metadata type
-2. Call ApexValidator class in your trigger handler or class to validate the your records pass your validation rules
+2. Call RecordValidator class in your trigger handler or class to validate the your records pass your validation rules
 
 This is useful in scenarios where standard validation rules cannot be used
 
@@ -22,7 +22,7 @@ This is useful in scenarios where standard validation rules cannot be used
 
 ```java
     Account someAccount = new Account(Name = 'Some Account');
-    new ApexValidator(someAccount).validate();
+    new RecordValidator(someAccount).validate();
 ```
 
 ![Example Validation Rule: Account Name Exception](./assets/validation-rule-example-account-name-exception.png)
