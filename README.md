@@ -1,8 +1,6 @@
 # Apex Validation Rules for Salesforce
 
-[![Travis CI](https://img.shields.io/travis/jongpie/ApexValidationRules/master.svg)](https://travis-ci.org/jongpie/ApexValidationRules)
-
-<a href="https://githubsfdeploy.herokuapp.com" target="_blank">
+<a href="https://githubsfdeploy.herokuapp.com/?owner=jongpie&repo=ApexValidationRules&ref=main" target="_blank">
     <img alt="Deploy to Salesforce" src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/deploy.png">
 </a>
 
