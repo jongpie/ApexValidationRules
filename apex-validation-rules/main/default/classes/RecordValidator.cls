@@ -544,29 +544,29 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             this.fieldDescribe = this.getLastFieldDescribe();
         }
 
-        public FieldPath(Schema.SObjectType sobjectType, Schema.SObjectField field) {
-            this(sobjectType, new List<Schema.SObjectField>{ field });
-        }
+        // public FieldPath(Schema.SObjectType sobjectType, Schema.SObjectField field) {
+        //     this(sobjectType, new List<Schema.SObjectField>{ field });
+        // }
 
-        public FieldPath(Schema.SObjectType sobjectType, List<Schema.SObjectField> fieldChain) {
-            this.sobjectType = sobjectType;
-            this.fieldChain = fieldChain;
-            this.fieldPath = this.getQueryField(fieldChain);
+        // public FieldPath(Schema.SObjectType sobjectType, List<Schema.SObjectField> fieldChain) {
+        //     this.sobjectType = sobjectType;
+        //     this.fieldChain = fieldChain;
+        //     this.fieldPath = this.getQueryField(fieldChain);
 
-            this.fieldDescribe = this.getLastFieldDescribe();
-        }
+        //     this.fieldDescribe = this.getLastFieldDescribe();
+        // }
 
-        public Schema.DescribeFieldResult getDescribe() {
-            return this.fieldDescribe;
-        }
+        // public Schema.DescribeFieldResult getDescribe() {
+        //     return this.fieldDescribe;
+        // }
 
         public Schema.SObjectField getField() {
             return this.fieldChain[this.fieldChain.size() - 1];
         }
 
-        public String getFieldPath() {
-            return this.fieldPath;
-        }
+        // public String getFieldPath() {
+        //     return this.fieldPath;
+        // }
 
         public Object getValue(SObject record) {
             Schema.SObjectType parentSObjectType = this.sobjectType;
@@ -630,21 +630,21 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             return this.fieldChain[lastFieldIndex].getDescribe();
         }
 
-        private String getQueryField(List<Schema.SObjectField> fields) {
-            Integer lastFieldIndex = fields.size() - 1;
-            List<String> fieldPathPieces = new List<String>();
-            for (Integer i = 0; i < fields.size(); i++) {
-                SObjectField field = fields[i];
-                // If any field in the chain is not accessible, then the user cant access the data, so return an empty list
-                if (!field.getDescribe().isAccessible()) {
-                    return null;
-                } else if (i == lastFieldIndex) {
-                    fieldPathPieces.add(field.getDescribe().getName());
-                } else {
-                    fieldPathPieces.add(field.getDescribe().getRelationshipName());
-                }
-            }
-            return String.join(fieldPathPieces, '.');
-        }
+        // private String getQueryField(List<Schema.SObjectField> fields) {
+        //     Integer lastFieldIndex = fields.size() - 1;
+        //     List<String> fieldPathPieces = new List<String>();
+        //     for (Integer i = 0; i < fields.size(); i++) {
+        //         SObjectField field = fields[i];
+        //         // If any field in the chain is not accessible, then the user cant access the data, so return an empty list
+        //         if (!field.getDescribe().isAccessible()) {
+        //             return null;
+        //         } else if (i == lastFieldIndex) {
+        //             fieldPathPieces.add(field.getDescribe().getName());
+        //         } else {
+        //             fieldPathPieces.add(field.getDescribe().getRelationshipName());
+        //         }
+        //     }
+        //     return String.join(fieldPathPieces, '.');
+        // }
     }
 }

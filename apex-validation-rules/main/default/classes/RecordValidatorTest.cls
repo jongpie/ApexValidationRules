@@ -33,6 +33,7 @@ private class RecordValidatorTest {
         );
     }
 
+    // Simpler tests - each test is for 1 field with a different data type
     @isTest
     static void validateForRuleWithOneBooleanFieldCondition() {
         Boolean userIsActive = false;
@@ -150,13 +151,13 @@ private class RecordValidatorTest {
     }
 
     @isTest
-    static void validateForRuleWithOneRegexFieldCondition() {
-        String accountName = '123';
+    static void validateForRuleWithOneStringFieldCondition() {
+        String accountName = 'Some account';
         Account account = createMockAccount();
         account.Name = accountName;
 
         RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('regex_condition', 'Name', '^[0-9]+$', 'RegEx', accountName);
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('name_condition', 'Name', '==', 'Value', accountName);
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
@@ -175,14 +176,41 @@ private class RecordValidatorTest {
         }
     }
 
+    // More complex tests
     @isTest
-    static void validateForRuleWithOneStringFieldCondition() {
-        String accountName = 'Some account';
+    static void validateForRuleWithOneBooleanFieldPathCondition() {
+        Boolean managerIsActive = false;
+        User manager = new User(IsActive = managerIsActive);
+        User user = new User(Id = UserInfo.getUserId(), Manager = manager);
+
+        RecordValidationRule__mdt rule = createMockRule('user_test', Schema.User.SObjectType);
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('manager_isactive_condition', 'Manager.IsActive', '==', 'Value', String.valueOf(managerIsActive));
+        List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+
+        RecordValidator validator = new RecordValidator(user).setRule(rule, conditions);
+        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
+        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
+
+        RecordValidator.ValidationRuleResult result = results.get(0);
+        System.assertEquals(true, result.hasError, result);
+        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+
+        try {
+            validator.validate();
+            System.assert(false, 'Exception expected on line above');
+        } catch(RecordValidator.RecordValidatorException ex) {
+            System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+        }
+    }
+
+    @isTest
+    static void validateForRuleWithOneRegexFieldCondition() {
+        String accountName = '123';
         Account account = createMockAccount();
         account.Name = accountName;
 
         RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('name_condition', 'Name', '==', 'Value', accountName);
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('regex_condition', 'Name', '^[0-9]+$', 'RegEx', accountName);
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
