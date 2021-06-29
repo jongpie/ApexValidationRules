@@ -2,6 +2,7 @@
  * This file is part of the Apex Validation Rules project, released under the MIT License.            *
  * See LICENSE file or go to https://github.com/jongpie/RecordValidationRules for full license details. *
  *****************************************************************************************************/
+
 public without sharing class RecordValidator {
     private static final List<String> RULE_DEVELOPER_NAMES = new List<String>();
     private static final Map<String, RecordValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
@@ -20,24 +21,17 @@ public without sharing class RecordValidator {
         this.sobjectType = records.get(0).getSObjectType();
     }
 
-    public RecordValidator setRule(RecordValidationRule__mdt rule) {
-        this.rulesProvided = true;
-        return this.setRule(rule, rule.RecordValidationRuleConditions__r);
-    }
+    // public RecordValidator setRule(RecordValidationRule__mdt rule) {
+    //     this.rulesProvided = true;
+    //     return this.setRule(rule, rule.RecordValidationRuleConditions__r);
+    // }
 
-    public RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        RULE_DEVELOPER_NAMES.add(rule.DeveloperName);
-        RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
-        CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
-        return this;
-    }
-
-    public RecordValidator setRules(List<RecordValidationRule__mdt> rules) {
-        for (RecordValidationRule__mdt rule : rules) {
-            this.setRule(rule);
-        }
-        return this;
-    }
+    // public RecordValidator setRules(List<RecordValidationRule__mdt> rules) {
+    //     for (RecordValidationRule__mdt rule : rules) {
+    //         this.setRule(rule);
+    //     }
+    //     return this;
+    // }
 
     public List<ValidationRuleResult> getResults() {
         return this.validate(false);
@@ -47,28 +41,37 @@ public without sharing class RecordValidator {
         this.validate(true);
     }
 
-    private List<RecordValidationRuleCondition__mdt> getConditions(String ruleDeveloperName) {
-        return CONDITIONS_BY_RULE_DEVELOPER_NAME.get(ruleDeveloperName);
+    // Private testVisible methods for mocking
+    @testVisible
+    private RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
+        RULE_DEVELOPER_NAMES.add(rule.DeveloperName);
+        RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
+        CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
+        return this;
     }
 
+    // Private methods
     private List<ValidationRuleResult> validate(Boolean shouldThrowException) {
-        if (RULES_BY_DEVELOPER_NAME.isEmpty() == true && rulesProvided == false) {
+        if (RULE_DEVELOPER_NAMES.isEmpty() == true && rulesProvided == false) {
             this.loadConfiguredRules();
         }
 
         // If there aren't any rules loaded or provided, then something isn't right
-        if (shouldThrowException == true && RULES_BY_DEVELOPER_NAME.isEmpty() == true) {
+        if (shouldThrowException == true && RULE_DEVELOPER_NAMES.isEmpty() == true) {
             throw new RecordValidatorException('No rules provided or configured, cannot validate');
         }
 
         List<ValidationRuleResult> results = new List<ValidationRuleResult>();
         for (SObject record : this.records) {
-            record.recalculateFormulas();
+            // record.recalculateFormulas();
             for (String ruleDeveloperName : RULE_DEVELOPER_NAMES) {
                 RecordValidationRule__mdt rule = RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
                 List<RecordValidationRuleCondition__mdt> ruleConditions = CONDITIONS_BY_RULE_DEVELOPER_NAME.get(rule.DeveloperName);
                 ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions);
-
+System.debug('ruleResult==' + ruleResult);
+System.debug('ruleResult.ruleConditions==' + ruleResult.ruleConditions);
+System.debug('ruleResult.getErrorMessage()==' + ruleResult.getErrorMessage());
+System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditionsLogic());
                 if (shouldThrowException == true && ruleResult.hasError == true) {
                     throw new RecordValidatorException(ruleResult.errorMessage);
                 }
@@ -88,34 +91,30 @@ public without sharing class RecordValidator {
                 ConditionLogicType__c,
                 CustomConditionLogic__c,
                 ErrorMessage__c,
-                (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM RecordValidationRuleConditions__r ORDER BY SortOrder__c)
-                // (SELECT Language__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
+                (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM RecordValidationRuleConditions__r ORDER BY SortOrder__c),
+                (SELECT Language__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
             FROM RecordValidationRule__mdt
             WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
         ];
-        this.setRules(configuredRules);
+        for (RecordValidationRule__mdt rule : configuredRules) {
+            this.setRule(rule, rule.RecordValidationRuleConditions__r);
+        }
     }
 
     public class RecordValidatorException extends Exception {
     }
 
     public class ValidationRuleResult {
-        @AuraEnabled
         public List<String> conditions { get; private set; }
-        @AuraEnabled
         public String conditionsLogic { get; private set; }
-        @AuraEnabled
         public String conditionsLogicType { get; private set; }
-        @AuraEnabled
         public String errorMessage { get; private set; }
-        @AuraEnabled
         public Boolean hasError {
             get {
                 return String.isNotBlank(this.errorMessage);
             }
             private set;
         }
-        @AuraEnabled
         public Id recordId {
             get {
                 return this.record.Id;
@@ -151,28 +150,30 @@ public without sharing class RecordValidator {
             System.debug('parsedConditionsLogic==' + parsedConditionsLogic);
 
             Boolean hasError = new BooleanExpression().evaluate(parsedConditionsLogic);
+            System.debug('hasError==' + hasError);
             if (hasError) {
                 this.errorMessage = this.getErrorMessage();
+                System.debug('this.errorMessage==' + this.errorMessage);
             }
         }
 
         private String getErrorMessage() {
-            // if (this.rule.RecordValidationRuleTranslations__r.isEmpty() == true) {
-                // return this.rule.ErrorMessage__c;
-            // }
+            if (this.rule.RecordValidationRuleTranslations__r.isEmpty() == true) {
+                return this.rule.ErrorMessage__c;
+            }
 
-            // for (RecordValidationRuleTranslation__mdt translation : this.rule.RecordValidationRuleTranslations__r) {
-            //     if (translation.Language__c == UserInfo.getLanguage()) {
-            //         return translation.ErrorMessage__c;
-            //     }
-            // }
+            for (RecordValidationRuleTranslation__mdt translation : this.rule.RecordValidationRuleTranslations__r) {
+                if (translation.Language__c == UserInfo.getLanguage()) {
+                    return translation.ErrorMessage__c;
+                }
+            }
 
             return this.rule.ErrorMessage__c;
         }
 
         private String getRuleConditionsLogic() {
             String conditionsLogic = String.isBlank(this.rule.CustomConditionLogic__c) ? '' : this.rule.CustomConditionLogic__c;
-
+System.debug('conditionsLogic==' + conditionsLogic);
             if (this.rule.ConditionLogicType__c != 'Custom') {
                 List<String> standardLogicPieces = new List<String>();
                 for (Integer i = 0; i < this.ruleConditions.size(); i++) {
@@ -180,6 +181,7 @@ public without sharing class RecordValidator {
                 }
                 conditionsLogic = '(' + String.join(standardLogicPieces, ' ' + this.rule.ConditionLogicType__c + ' ') + ')';
             }
+System.debug('and nowconditionsLogic==' + conditionsLogic);
 
             List<String> parsedCharacters = new List<String>();
             Boolean hasFoundNumbers = false;
@@ -191,6 +193,7 @@ public without sharing class RecordValidator {
                 } else if (!character.isNumeric() && hasFoundNumbers) {
                     hasFoundNumbers = false;
                     Integer foundNumber = Integer.valueOf(foundNumberString) - 1;
+                    System.debug('foundNumber==' + foundNumber);
 
                     parsedCharacters.add('{' + foundNumber + '}');
                     foundNumberString = '';
@@ -200,6 +203,7 @@ public without sharing class RecordValidator {
                     foundNumberString += character;
                 } else if (hasFoundNumbers && !character.isNumeric() && !String.isBlank(foundNumberString)) {
                     Integer foundNumber = Integer.valueOf(foundNumberString) - 1;
+                    System.debug('foundNumber==' + foundNumber);
 
                     parsedCharacters.add('{' + foundNumber + '}');
                     foundNumberString = '';
@@ -250,52 +254,23 @@ public without sharing class RecordValidator {
                 when Boolean {
                     return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue));
                 }
-                when Combobox {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
                 when Currency {
                     return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
                 }
                 when Date {
-                    return this.compareDate(Date.valueOf(recordFieldValue), Date.valueOf(comparisonValue));
+                    Date recordFieldDate = this.getAsDate(recordFieldValue);
+                    Date comparisonDate = this.getAsDate(comparisonValue);
+                    return this.compareDate(recordFieldDate, comparisonDate);
                 }
                 when Datetime {
-                    return this.compareDatetime(Datetime.valueOf(recordFieldValue), Datetime.valueOf(comparisonValue));
+                    Datetime recordFieldDatetime = this.getAsDatetime(recordFieldValue);
+                    Datetime comparisonDatetime = this.getAsDatetime(comparisonValue);
+                    return this.compareDatetime(recordFieldDatetime, comparisonDatetime);
                 }
-                when Double {
+                when Double, Integer, Percent {
                     return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
                 }
-                when Email {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when Id {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when Integer {
-                    return this.compareInteger(Integer.valueOf(recordFieldValue), Integer.valueOf(comparisonValue));
-                }
-                when MultiPicklist {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when Percent {
-                    return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
-                }
-                when Phone {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when Picklist {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when Reference {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when String {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when TextArea {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
-                }
-                when Url {
+                when Email, Id, MultiPicklist, Phone, Picklist, Reference, String, Combobox, TextArea, Url {
                     return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
                 }
                 when else {
@@ -317,6 +292,9 @@ public without sharing class RecordValidator {
             switch on this.ruleCondition.ValueType__c {
                 when 'Field' {
                     return new FieldPath(this.sobjectApiName, this.ruleCondition.Value__c).getValue(this.record);
+                }
+                when 'RegEx' {
+                    return this.ruleCondition.Value__c;
                 }
                 when 'Value' {
                     return this.ruleCondition.Value__c;
@@ -419,31 +397,31 @@ public without sharing class RecordValidator {
             }
         }
 
-        private Boolean compareInteger(Integer recordFieldValue, Integer comparisonValue) {
-            switch on this.ruleCondition.Operator__c {
-                when '==' {
-                    return recordFieldValue == comparisonValue;
-                }
-                when '!=' {
-                    return recordFieldValue != comparisonValue;
-                }
-                when '<' {
-                    return recordFieldValue < comparisonValue;
-                }
-                when '<=' {
-                    return recordFieldValue <= comparisonValue;
-                }
-                when '>' {
-                    return recordFieldValue > comparisonValue;
-                }
-                when '>=' {
-                    return recordFieldValue >= comparisonValue;
-                }
-                when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
-                }
-            }
-        }
+        // private Boolean compareInteger(Integer recordFieldValue, Integer comparisonValue) {
+        //     switch on this.ruleCondition.Operator__c {
+        //         when '==' {
+        //             return recordFieldValue == comparisonValue;
+        //         }
+        //         when '!=' {
+        //             return recordFieldValue != comparisonValue;
+        //         }
+        //         when '<' {
+        //             return recordFieldValue < comparisonValue;
+        //         }
+        //         when '<=' {
+        //             return recordFieldValue <= comparisonValue;
+        //         }
+        //         when '>' {
+        //             return recordFieldValue > comparisonValue;
+        //         }
+        //         when '>=' {
+        //             return recordFieldValue >= comparisonValue;
+        //         }
+        //         when else {
+        //             throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+        //         }
+        //     }
+        // }
 
         private Boolean compareString(String recordFieldValue, String comparisonValue) {
             switch on this.ruleCondition.Operator__c {
@@ -470,28 +448,60 @@ public without sharing class RecordValidator {
                 }
             }
         }
+
+        private Date getAsDate(Object dateValue) {
+            String dateString;
+            if (dateValue == null) {
+                return null;
+            } else if (dateValue instanceOf String) {
+                dateString = (String) dateValue;
+            } else {
+                dateString = JSON.serialize(dateValue);
+            }
+            return (Date) JSON.deserialize(dateString, Date.class);
+        }
+
+        private Datetime getAsDatetime(Object datetimeValue) {
+            System.debug('casting datetimeValue: ' + datetimeValue);
+            String datetimeString;
+            if (datetimeValue == null) {
+                return null;
+            } else if (datetimeValue instanceOf String) {
+                datetimeString = (String) datetimeValue;
+            } else {
+                datetimeString = JSON.serialize(datetimeValue);
+            }
+            return (Datetime) JSON.deserialize(datetimeString, Datetime.class);
+        }
     }
 
     //https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
     public class BooleanExpression {
         public Boolean evaluate(String x) {
+            System.debug('evaluating bool string: ' + x);
+
             x = simplify(x);
 
-            if (isSimpleExpression(x))
+            if (isSimpleExpression(x)) {
                 return Boolean.valueOf(x);
+            }
 
             if (x.contains('&&')) {
                 return andJoin(x.split('&&', 2)[0], x.split('&&', 2)[1]);
             }
+
             if (x.contains('||')) {
                 String p1 = x.split('\\|\\|', 2)[0];
                 String p2 = x.split('\\|\\|', 2)[1];
 
                 return orJoin(p1, p2);
             }
-            if (x.startsWith('!'))
-                return !evaluate(x.substring(1));
 
+            if (x.startsWith('!')) {
+                return !evaluate(x.substring(1));
+            }
+
+            System.debug('final evaluation of x: ' + x);
             return Boolean.valueOf(x);
         }
 
@@ -509,6 +519,8 @@ public without sharing class RecordValidator {
 
         private String simplify(String x) {
             x = x.trim();
+            x = x.replace('AND', '&&');
+            x = x.replace('OR', '||');
             while (x.contains('(')) {
                 String sub = x.substringAfterLast('(').substringBefore(')');
                 x = x.replace('(' + sub + ')', String.valueOf(evaluate(sub)));

@@ -4,7 +4,7 @@
     <externalId>false</externalId>
     <fieldManageability>SubscriberControlled</fieldManageability>
     <label>Record Validation Rule</label>
-    <referenceTo>ApexValidationRule__mdt</referenceTo>
+    <referenceTo>RecordValidationRule__mdt</referenceTo>
     <relationshipLabel>Record Validation Rule Translations</relationshipLabel>
     <relationshipName>RecordValidationRuleTranslations</relationshipName>
     <required>true</required>
