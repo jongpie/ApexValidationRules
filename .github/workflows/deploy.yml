@@ -79,6 +79,9 @@ jobs:
             - name: 'Authorize Dev Hubs'
               run: sfdx auth:sfdxurl:store --sfdxurlfile ./DEVHUB_SFDX_URL.txt --setalias ci_devhub --setdefaultdevhubusername
 
+            - name: 'Create Scratch Org'
+              run: sfdx force:org:create --setdefaultusername --targetdevhubusername ci_devhub --durationdays 1 --definitionfile ./config/project-scratch-def.json --wait 10
+
             - name: 'Push Source'
               run: sfdx force:source:push
 
