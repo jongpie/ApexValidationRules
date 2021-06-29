@@ -42,8 +42,8 @@ public without sharing class ApexValidator {
         return this.validate(false);
     }
 
-    public List<ApexValidationRuleResult> validate() {
-        return this.validate(true);
+    public void validate() {
+        this.validate(true);
     }
 
     private List<ApexValidationRuleCondition__mdt> getConditions(String ruleDeveloperName) {
@@ -173,7 +173,7 @@ public without sharing class ApexValidator {
 
             if (this.rule.ConditionLogicType__c != 'Custom') {
                 List<String> standardLogicPieces = new List<String>();
-                for (Integer i = 0; i < this.rule.ApexValidationRuleConditions__r.size(); i++) {
+                for (Integer i = 0; i < this.ruleConditions.size(); i++) {
                     standardLogicPieces.add(String.valueOf(i + 1));
                 }
                 conditionsLogic = '(' + String.join(standardLogicPieces, ' ' + this.rule.ConditionLogicType__c + ' ') + ')';
