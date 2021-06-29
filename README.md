@@ -1,5 +1,10 @@
 # Apex Validation Rules for Salesforce
 
+[![Deployment](https://github.com/jongpie/ApexValidationRules/actions/workflows/deploy.yml/badge.svg)](https://github.com/jongpie/ApexValidationRules/actions/workflows/deploy.yml)
+[![codecov](https://codecov.io/gh/jongpie/ApexValidationRules/branch/main/graph/badge.svg?token=1DJPDRM3N4)](https://codecov.io/gh/jongpie/ApexValidationRules)
+
+---
+
 <a href="https://githubsfdeploy.herokuapp.com/?owner=jongpie&repo=ApexValidationRules&ref=main" target="_blank">
     <img alt="Deploy to Salesforce" src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/deploy.png">
 </a>
