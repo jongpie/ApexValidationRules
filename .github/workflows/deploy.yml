@@ -96,5 +96,5 @@ jobs:
                   flags: Apex
 
             - name: 'Delete Scratch Org'
-              run: npm run org:delete:noprompt
+              run: sfdx force:org:delete --noprompt
               if: ${{ always() }}
