@@ -3,7 +3,7 @@
  * See LICENSE file or go to https://github.com/jongpie/ApexValidationRules for full license details. *
  *****************************************************************************************************/
 public without sharing class RecordValidator {
-    // TODO re-add sorted list for rules based on SortOrder__c field
+    private static final List<String> RULE_DEVELOPER_NAMES = new List<String>();
     private static final Map<String, ApexValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, ApexValidationRule__mdt>();
     private static final Map<String, List<ApexValidationRuleCondition__mdt>> CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<ApexValidationRuleCondition__mdt>>();
 
@@ -26,6 +26,7 @@ public without sharing class RecordValidator {
     }
 
     public RecordValidator setRule(ApexValidationRule__mdt rule, List<ApexValidationRuleCondition__mdt> conditions) {
+        RULE_DEVELOPER_NAMES.add(rule.DeveloperName);
         RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
         CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
         return this;
@@ -63,7 +64,8 @@ public without sharing class RecordValidator {
         List<ApexValidationRuleResult> results = new List<ApexValidationRuleResult>();
         for (SObject record : this.records) {
             record.recalculateFormulas();
-            for (ApexValidationRule__mdt rule : RULES_BY_DEVELOPER_NAME.values()) {
+            for (String ruleDeveloperName : RULE_DEVELOPER_NAMES) {
+                ApexValidationRule__mdt rule = RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
                 List<ApexValidationRuleCondition__mdt> ruleConditions = CONDITIONS_BY_RULE_DEVELOPER_NAME.get(rule.DeveloperName);
                 ApexValidationRuleResult ruleResult = new ApexValidationRuleResult(record, rule, ruleConditions);
 
