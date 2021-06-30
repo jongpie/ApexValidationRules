@@ -4,7 +4,7 @@
  *******************************************************************************************************/
 
 @isTest
-private class FlowRecordValidatorTest {
+private class FlowRecordValidatorTests {
     static RecordValidationRule__mdt createMockRule() {
         return new RecordValidationRule__mdt(
             ConditionLogicType__c = 'AND',

@@ -4,7 +4,7 @@
  *******************************************************************************************************/
 
 @isTest
-private class RecordValidatorTest {
+private class RecordValidatorTests {
     static RecordValidationRule__mdt createMockRule() {
         return new RecordValidationRule__mdt(
             ConditionLogicType__c = 'AND',
