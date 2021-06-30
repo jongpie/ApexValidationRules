@@ -4,9 +4,11 @@
  *****************************************************************************************************/
 
 public without sharing class RecordValidator {
-    private static final List<String> RULE_DEVELOPER_NAMES = new List<String>();
-    private static final Map<String, RecordValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
-    private static final Map<String, List<RecordValidationRuleCondition__mdt>> CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleCondition__mdt>>();
+    private static final Map<Schema.SObjectType, List<RecordValidationRule__mdt>> CACHED_RULES_BY_SOBJECT_TYPE = new Map<Schema.SObjectType, List<RecordValidationRule__mdt>>();
+
+    private final List<String> ruleDeveloperNames = new List<String>();
+    private final Map<String, RecordValidationRule__mdt> rulesByDeveloperName = new Map<String, RecordValidationRule__mdt>();
+    private final Map<String, List<RecordValidationRuleCondition__mdt>> conditionsByRuleDeveloperName = new Map<String, List<RecordValidationRuleCondition__mdt>>();
 
     private List<SObject> records;
     private Schema.SObjectType sobjectType;
@@ -21,57 +23,28 @@ public without sharing class RecordValidator {
         this.sobjectType = records.get(0).getSObjectType();
     }
 
-    // public RecordValidator setRule(RecordValidationRule__mdt rule) {
-    //     this.rulesProvided = true;
-    //     return this.setRule(rule, rule.RecordValidationRuleConditions__r);
-    // }
-
-    // public RecordValidator setRules(List<RecordValidationRule__mdt> rules) {
-    //     for (RecordValidationRule__mdt rule : rules) {
-    //         this.setRule(rule);
-    //     }
-    //     return this;
-    // }
-
-    public List<ValidationRuleResult> getResults() {
-        return this.validate(false);
+    public List<ValidationRuleResult> validate() {
+        return this.validate(true);
     }
 
-    public void validate() {
-        this.validate(true);
-    }
-
-    // Private testVisible methods for mocking
-    @testVisible
-    private RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        RULE_DEVELOPER_NAMES.add(rule.DeveloperName);
-        RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
-        CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
-        return this;
-    }
-
-    // Private methods
-    private List<ValidationRuleResult> validate(Boolean shouldThrowException) {
-        if (RULE_DEVELOPER_NAMES.isEmpty() == true && rulesProvided == false) {
-            this.loadConfiguredRules();
+    public List<ValidationRuleResult> validate(Boolean shouldThrowException) {
+        if (this.ruleDeveloperNames.isEmpty() == true && rulesProvided == false) {
+            this.loadConfiguredRules(this.sobjectType);
         }
 
         // If there aren't any rules loaded or provided, then something isn't right
-        if (shouldThrowException == true && RULE_DEVELOPER_NAMES.isEmpty() == true) {
+        if (shouldThrowException == true && this.ruleDeveloperNames.isEmpty() == true) {
             throw new RecordValidatorException('No rules provided or configured, cannot validate');
         }
 
         List<ValidationRuleResult> results = new List<ValidationRuleResult>();
         for (SObject record : this.records) {
             // record.recalculateFormulas();
-            for (String ruleDeveloperName : RULE_DEVELOPER_NAMES) {
-                RecordValidationRule__mdt rule = RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
-                List<RecordValidationRuleCondition__mdt> ruleConditions = CONDITIONS_BY_RULE_DEVELOPER_NAME.get(rule.DeveloperName);
+            for (String ruleDeveloperName : this.ruleDeveloperNames) {
+                RecordValidationRule__mdt rule = this.rulesByDeveloperName.get(ruleDeveloperName);
+                List<RecordValidationRuleCondition__mdt> ruleConditions = this.conditionsByRuleDeveloperName.get(rule.DeveloperName);
                 ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions);
-System.debug('ruleResult==' + ruleResult);
-System.debug('ruleResult.ruleConditions==' + ruleResult.ruleConditions);
-System.debug('ruleResult.getErrorMessage()==' + ruleResult.getErrorMessage());
-System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditionsLogic());
+
                 if (shouldThrowException == true && ruleResult.hasError == true) {
                     throw new RecordValidatorException(ruleResult.errorMessage);
                 }
@@ -82,8 +55,21 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
         return results;
     }
 
+    // Private testVisible methods for mocking
+    @testVisible
+    private RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
+        this.ruleDeveloperNames.add(rule.DeveloperName);
+        this.rulesByDeveloperName.put(rule.DeveloperName, rule);
+        this.conditionsByRuleDeveloperName.put(rule.DeveloperName, conditions);
+        return this;
+    }
+
     // Private methods
-    private void loadConfiguredRules() {
+    private void loadConfiguredRules(Schema.SObjectType sobjectType) {
+        if (CACHED_RULES_BY_SOBJECT_TYPE.containsKey(sobjectType)) {
+            return;
+        }
+
         List<RecordValidationRule__mdt> configuredRules = [
             SELECT
                 DeveloperName,
@@ -96,9 +82,13 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
             FROM RecordValidationRule__mdt
             WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
         ];
+
+        // Add to the current instance's cache
         for (RecordValidationRule__mdt rule : configuredRules) {
             this.setRule(rule, rule.RecordValidationRuleConditions__r);
         }
+        // Add to the static cache
+        CACHED_RULES_BY_SOBJECT_TYPE.put(sobjectType, configuredRules);
     }
 
     public class RecordValidatorException extends Exception {
@@ -115,15 +105,15 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
             }
             private set;
         }
-        public Id recordId {
-            get {
-                return this.record.Id;
-            }
-            private set;
-        }
+        // public Id recordId {
+        //     get {
+        //         return this.record.Id;
+        //     }
+        //     private set;
+        // }
 
-        private SObject record;
-        private RecordValidationRule__mdt rule;
+        public SObject record;
+        public RecordValidationRule__mdt rule;
         private List<RecordValidationRuleCondition__mdt> ruleConditions;
 
         public ValidationRuleResult(SObject record, RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> ruleConditions) {
@@ -147,13 +137,10 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
             }
 
             String parsedConditionsLogic = String.format(this.getRuleConditionsLogic(), booleanValues);
-            System.debug('parsedConditionsLogic==' + parsedConditionsLogic);
 
             Boolean hasError = new BooleanExpression().evaluate(parsedConditionsLogic);
-            System.debug('hasError==' + hasError);
             if (hasError) {
                 this.errorMessage = this.getErrorMessage();
-                System.debug('this.errorMessage==' + this.errorMessage);
             }
         }
 
@@ -173,7 +160,7 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
 
         private String getRuleConditionsLogic() {
             String conditionsLogic = String.isBlank(this.rule.CustomConditionLogic__c) ? '' : this.rule.CustomConditionLogic__c;
-System.debug('conditionsLogic==' + conditionsLogic);
+
             if (this.rule.ConditionLogicType__c != 'Custom') {
                 List<String> standardLogicPieces = new List<String>();
                 for (Integer i = 0; i < this.ruleConditions.size(); i++) {
@@ -181,7 +168,6 @@ System.debug('conditionsLogic==' + conditionsLogic);
                 }
                 conditionsLogic = '(' + String.join(standardLogicPieces, ' ' + this.rule.ConditionLogicType__c + ' ') + ')';
             }
-System.debug('and nowconditionsLogic==' + conditionsLogic);
 
             List<String> parsedCharacters = new List<String>();
             Boolean hasFoundNumbers = false;
@@ -254,7 +240,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
                 when Boolean {
                     return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue));
                 }
-                when Currency {
+                when Currency, Double, Integer, Percent {
                     return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
                 }
                 when Date {
@@ -267,14 +253,11 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
                     Datetime comparisonDatetime = this.getAsDatetime(comparisonValue);
                     return this.compareDatetime(recordFieldDatetime, comparisonDatetime);
                 }
-                when Double, Integer, Percent {
-                    return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
-                }
                 when Email, Id, MultiPicklist, Phone, Picklist, Reference, String, Combobox, TextArea, Url {
                     return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Could not process field path: ' + this.ruleCondition.FieldPath__c);
                 }
             }
         }
@@ -305,146 +288,116 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             }
         }
 
+        // In Apex, you can't use comparison operators on instances of Object, so several private methods are used for each data type
+        // Example of what you can't do in Apex:
+        //          Object today = System.today();
+        //          Object yesterday = System.today().addDays(-1);
+        //          System.assert(today > yesterday); // This line cannot execute since it's comparing Object
         private Boolean compareBoolean(Boolean recordFieldValue, Boolean comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Boolean: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
         private Boolean compareDate(Date recordFieldValue, Date comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Date: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
         private Boolean compareDatetime(Datetime recordFieldValue, Datetime comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Datetime: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
         private Boolean compareDouble(Double recordFieldValue, Double comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Double: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
-        // private Boolean compareInteger(Integer recordFieldValue, Integer comparisonValue) {
-        //     switch on this.ruleCondition.Operator__c {
-        //         when '==' {
-        //             return recordFieldValue == comparisonValue;
-        //         }
-        //         when '!=' {
-        //             return recordFieldValue != comparisonValue;
-        //         }
-        //         when '<' {
-        //             return recordFieldValue < comparisonValue;
-        //         }
-        //         when '<=' {
-        //             return recordFieldValue <= comparisonValue;
-        //         }
-        //         when '>' {
-        //             return recordFieldValue > comparisonValue;
-        //         }
-        //         when '>=' {
-        //             return recordFieldValue >= comparisonValue;
-        //         }
-        //         when else {
-        //             throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
-        //         }
-        //     }
-        // }
-
         private Boolean compareString(String recordFieldValue, String comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
-                    return recordFieldValue < comparisonValue;
-                }
-                when '<=' {
-                    return recordFieldValue <= comparisonValue;
-                }
-                when '>' {
-                    return recordFieldValue > comparisonValue;
-                }
-                when '>=' {
-                    return recordFieldValue >= comparisonValue;
+                when 'CONTAINS' {
+                    return recordFieldValue.contains(comparisonValue);
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for String: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -453,7 +406,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             String dateString;
             if (dateValue == null) {
                 return null;
-            } else if (dateValue instanceOf String) {
+            } else if (dateValue instanceof String) {
                 dateString = (String) dateValue;
             } else {
                 dateString = JSON.serialize(dateValue);
@@ -462,11 +415,10 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
         }
 
         private Datetime getAsDatetime(Object datetimeValue) {
-            System.debug('casting datetimeValue: ' + datetimeValue);
             String datetimeString;
             if (datetimeValue == null) {
                 return null;
-            } else if (datetimeValue instanceOf String) {
+            } else if (datetimeValue instanceof String) {
                 datetimeString = (String) datetimeValue;
             } else {
                 datetimeString = JSON.serialize(datetimeValue);
@@ -478,8 +430,6 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
     //https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
     public class BooleanExpression {
         public Boolean evaluate(String x) {
-            System.debug('evaluating bool string: ' + x);
-
             x = simplify(x);
 
             if (isSimpleExpression(x)) {
@@ -501,7 +451,6 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
                 return !evaluate(x.substring(1));
             }
 
-            System.debug('final evaluation of x: ' + x);
             return Boolean.valueOf(x);
         }
 
@@ -521,7 +470,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             x = x.trim();
             x = x.replace('AND', '&&');
             x = x.replace('OR', '||');
-            while (x.contains('(')) {
+            while (x.contains('(') == true) {
                 String sub = x.substringAfterLast('(').substringBefore(')');
                 x = x.replace('(' + sub + ')', String.valueOf(evaluate(sub)));
             }
@@ -544,29 +493,9 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             this.fieldDescribe = this.getLastFieldDescribe();
         }
 
-        // public FieldPath(Schema.SObjectType sobjectType, Schema.SObjectField field) {
-        //     this(sobjectType, new List<Schema.SObjectField>{ field });
-        // }
-
-        // public FieldPath(Schema.SObjectType sobjectType, List<Schema.SObjectField> fieldChain) {
-        //     this.sobjectType = sobjectType;
-        //     this.fieldChain = fieldChain;
-        //     this.fieldPath = this.getQueryField(fieldChain);
-
-        //     this.fieldDescribe = this.getLastFieldDescribe();
-        // }
-
-        // public Schema.DescribeFieldResult getDescribe() {
-        //     return this.fieldDescribe;
-        // }
-
         public Schema.SObjectField getField() {
             return this.fieldChain[this.fieldChain.size() - 1];
         }
-
-        // public String getFieldPath() {
-        //     return this.fieldPath;
-        // }
 
         public Object getValue(SObject record) {
             Schema.SObjectType parentSObjectType = this.sobjectType;
@@ -629,22 +558,5 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             Integer lastFieldIndex = this.fieldChain.size() - 1;
             return this.fieldChain[lastFieldIndex].getDescribe();
         }
-
-        // private String getQueryField(List<Schema.SObjectField> fields) {
-        //     Integer lastFieldIndex = fields.size() - 1;
-        //     List<String> fieldPathPieces = new List<String>();
-        //     for (Integer i = 0; i < fields.size(); i++) {
-        //         SObjectField field = fields[i];
-        //         // If any field in the chain is not accessible, then the user cant access the data, so return an empty list
-        //         if (!field.getDescribe().isAccessible()) {
-        //             return null;
-        //         } else if (i == lastFieldIndex) {
-        //             fieldPathPieces.add(field.getDescribe().getName());
-        //         } else {
-        //             fieldPathPieces.add(field.getDescribe().getRelationshipName());
-        //         }
-        //     }
-        //     return String.join(fieldPathPieces, '.');
-        // }
     }
 }

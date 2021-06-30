@@ -6,173 +6,211 @@
 @isTest
 private class RecordValidatorTest {
     static RecordValidationRule__mdt createMockRule(String developerName, SObjectType sobjectType) {
+        return createMockRule();
+    }
+
+    static RecordValidationRule__mdt createMockRule() {
         return new RecordValidationRule__mdt(
             ConditionLogicType__c = 'AND',
             CustomConditionLogic__c = null,
-            DeveloperName = developerName,
             ErrorMessage__c = 'Whoops, an error occurred',
-            IsActive__c = true,
-            SObjectType__c = sobjectType.getDescribe().getName()
+            IsActive__c = true
         );
     }
 
     static RecordValidationRuleCondition__mdt createMockRuleCondition(String developerName, String fieldPath, String operator, String valueType, String value) {
+        return createMockRuleCondition(fieldPath, operator, valueType, value);
+    }
+
+    static RecordValidationRuleCondition__mdt createMockRuleCondition(String fieldPath, String operator, String valueType, Object value) {
+        String valueString = value instanceof String ? (String) value : JSON.serialize(value);
         return new RecordValidationRuleCondition__mdt(
-            DeveloperName = developerName,
             FieldPath__c = fieldPath,
             Operator__c = operator,
             SortOrder__c = null,
-            Value__c = value,
+            Value__c = valueString,
             ValueType__c = valueType
         );
     }
 
     static Account createMockAccount() {
-        return new Account(
-            Name = 'Test account'
-        );
+        return new Account(Name = 'Test account');
     }
 
     // Simpler tests - each test is for 1 field with a different data type
     @isTest
-    static void validateForRuleWithOneBooleanFieldCondition() {
-        Boolean userIsActive = false;
-        User user = new User(IsActive = userIsActive);
+    static void validateForRuleWithBooleanFieldAndAllOperators() {
+        String fieldPath = 'IsActive';
+        User record = new User(IsActive = true);
+        Map<String, Boolean> operatorToValue = new Map<String, Boolean>{ 'EQUAL_TO' => true, 'NOT_EQUAL_TO' => false };
+        for (String operator : operatorToValue.keySet()) {
+            Boolean value = operatorToValue.get(operator);
 
-        RecordValidationRule__mdt rule = createMockRule('user_test', Schema.User.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('isactive_condition', 'IsActive', '==', 'Value', String.valueOf(userIsActive));
-        List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
-        RecordValidator validator = new RecordValidator(user).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
-        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
 
-        RecordValidator.ValidationRuleResult result = results.get(0);
-        System.assertEquals(true, result.hasError, result);
-        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
 
-        try {
-            validator.validate();
-            System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
-            System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            }
         }
     }
 
     @isTest
-    static void validateForRuleWithOneCurrencyFieldCondition() {
-        Integer accountAnnualRevenue = 123000;
-        Account account = createMockAccount();
-        account.AnnualRevenue = accountAnnualRevenue;
-
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('revenue_condition', 'AnnualRevenue', '>=', 'Value', String.valueOf(accountAnnualRevenue))
-        };
-
-        RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
-        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
-
-        RecordValidator.ValidationRuleResult result = results.get(0);
-        System.assertEquals(true, result.hasError, result);
-        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
-
-        try {
-            validator.validate();
-            System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
-            System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
-        }
-    }
-
-    @isTest
-    static void validateForRuleWithOneDateFieldCondition() {
+    static void validateForRuleWithDateFieldAndAllOperators() {
+        String fieldPath = 'CloseDate';
         Date opportunityCloseDate = System.today();
-        Opportunity opportunity = new Opportunity(CloseDate = opportunityCloseDate);
+        Opportunity record = new Opportunity(CloseDate = opportunityCloseDate);
 
-        RecordValidationRule__mdt rule = createMockRule('opportunity_test', Schema.Opportunity.SObjectType);
-        List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('close_date_condition', 'CloseDate', '==', 'Value', JSON.serialize(opportunityCloseDate))
+        Map<String, Date> operatorToValue = new Map<String, Date>{
+            'EQUAL_TO' => opportunityCloseDate,
+            'NOT_EQUAL_TO' => opportunityCloseDate.addDays(10),
+            'LESS_THAN' => opportunityCloseDate.addDays(10),
+            'LESS_THAN_OR_EQUAL_TO' => opportunityCloseDate.addDays(10),
+            'GREATER_THAN' => opportunityCloseDate.addDays(-10),
+            'GREATER_THAN_OR_EQUAL_TO' => opportunityCloseDate.addDays(-10)
         };
+        for (String operator : operatorToValue.keySet()) {
+            Date value = operatorToValue.get(operator);
 
-        RecordValidator validator = new RecordValidator(opportunity).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
-        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
-        RecordValidator.ValidationRuleResult result = results.get(0);
-        System.assertEquals(true, result.hasError, result);
-        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
-    }
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
 
-    @isTest
-    static void validateForRuleWithOneDatetimeFieldCondition() {
-        Datetime eventActivityDatetime = System.now().addDays(-3);
-        Event event = new Event(ActivityDatetime = eventActivityDatetime);
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
 
-        RecordValidationRule__mdt rule = createMockRule('event_test', Schema.Event.SObjectType);
-        List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('acitivity_datetime_condition', 'ActivityDatetime', '<=', 'Value', JSON.serialize(eventActivityDatetime))
-        };
-
-        RecordValidator validator = new RecordValidator(event).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
-        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
-
-        RecordValidator.ValidationRuleResult result = results.get(0);
-        System.assertEquals(true, result.hasError, result);
-        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
-    }
-
-    @isTest
-    static void validateForRuleWithOneIntegerFieldCondition() {
-        Integer accountNumberOfEmployees = 10;
-        Account account = createMockAccount();
-        account.NumberOfEmployees = accountNumberOfEmployees;
-
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('number_of_employees_condition', 'NumberOfEmployees', '==', 'Value', String.valueOf(accountNumberOfEmployees));
-                List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
-
-        RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
-        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
-
-        RecordValidator.ValidationRuleResult result = results.get(0);
-        System.assertEquals(true, result.hasError, result);
-        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
-
-        try {
-            validator.validate();
-            System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
-            System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            }
         }
     }
 
     @isTest
-    static void validateForRuleWithOneStringFieldCondition() {
+    static void validateForRuleWithDatetimeFieldAndAllOperators() {
+        String fieldPath = 'ActivityDatetime';
+        Datetime eventActivityDatetime = System.now().addDays(-3);
+        Event record = new Event(ActivityDatetime = eventActivityDatetime);
+
+        Map<String, Datetime> operatorToValue = new Map<String, Datetime>{
+            'EQUAL_TO' => eventActivityDatetime,
+            'NOT_EQUAL_TO' => eventActivityDatetime.addDays(10),
+            'LESS_THAN' => eventActivityDatetime.addDays(10),
+            'LESS_THAN_OR_EQUAL_TO' => eventActivityDatetime.addDays(10),
+            'GREATER_THAN' => eventActivityDatetime.addDays(-10),
+            'GREATER_THAN_OR_EQUAL_TO' => eventActivityDatetime.addDays(-10)
+        };
+        for (String operator : operatorToValue.keySet()) {
+            Datetime value = operatorToValue.get(operator);
+
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
+
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            }
+        }
+    }
+
+    @isTest
+    static void validateForRuleWithDoubleFieldAndAllOperators() {
+        String fieldPath = 'AnnualRevenue';
+        Double accountAnnualRevenue = 123000;
+        Account record = createMockAccount();
+        record.AnnualRevenue = accountAnnualRevenue;
+
+        Map<String, Double> operatorToValue = new Map<String, Double>{
+            'EQUAL_TO' => accountAnnualRevenue,
+            'NOT_EQUAL_TO' => accountAnnualRevenue + 10,
+            'LESS_THAN' => accountAnnualRevenue + 10,
+            'LESS_THAN_OR_EQUAL_TO' => accountAnnualRevenue + 10,
+            'GREATER_THAN' => accountAnnualRevenue - 10,
+            'GREATER_THAN_OR_EQUAL_TO' => accountAnnualRevenue - 10
+        };
+        for (String operator : operatorToValue.keySet()) {
+            Double value = operatorToValue.get(operator);
+
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
+
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            }
+        }
+    }
+
+    @isTest
+    static void validateForRuleWithStringFieldAndAllOperators() {
+        String fieldPath = 'Name';
         String accountName = 'Some account';
-        Account account = createMockAccount();
-        account.Name = accountName;
+        Account record = createMockAccount();
+        record.Name = accountName;
 
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('name_condition', 'Name', '==', 'Value', accountName);
-        List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+        Map<String, String> operatorToValue = new Map<String, String>{ 'EQUAL_TO' => accountName, 'NOT_EQUAL_TO' => 'something else' };
+        for (String operator : operatorToValue.keySet()) {
+            String value = operatorToValue.get(operator);
 
-        RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
-        System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
-        RecordValidator.ValidationRuleResult result = results.get(0);
-        System.assertEquals(true, result.hasError, result);
-        System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
 
-        try {
-            validator.validate();
-            System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
-            System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            }
         }
     }
 
@@ -184,11 +222,17 @@ private class RecordValidatorTest {
         User user = new User(Id = UserInfo.getUserId(), Manager = manager);
 
         RecordValidationRule__mdt rule = createMockRule('user_test', Schema.User.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('manager_isactive_condition', 'Manager.IsActive', '==', 'Value', String.valueOf(managerIsActive));
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition(
+            'manager_isactive_condition',
+            'Manager.IsActive',
+            'EQUAL_TO',
+            'Value',
+            String.valueOf(managerIsActive)
+        );
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
         RecordValidator validator = new RecordValidator(user).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
+        List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
         RecordValidator.ValidationRuleResult result = results.get(0);
@@ -198,7 +242,7 @@ private class RecordValidatorTest {
         try {
             validator.validate();
             System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
+        } catch (RecordValidator.RecordValidatorException ex) {
             System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
         }
     }
@@ -214,7 +258,7 @@ private class RecordValidatorTest {
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
+        List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
         RecordValidator.ValidationRuleResult result = results.get(0);
@@ -224,7 +268,7 @@ private class RecordValidatorTest {
         try {
             validator.validate();
             System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
+        } catch (RecordValidator.RecordValidatorException ex) {
             System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
         }
     }
@@ -239,12 +283,12 @@ private class RecordValidatorTest {
 
         RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('name_condition', 'Name', '==', 'Value', accountName),
-            createMockRuleCondition('revenue_condition', 'AnnualRevenue', '>=', 'Value', String.valueOf(accountAnnualRevenue))
+            createMockRuleCondition('name_condition', 'Name', 'EQUAL_TO', 'Value', accountName),
+            createMockRuleCondition('revenue_condition', 'AnnualRevenue', 'GREATER_THAN_OR_EQUAL_TO', 'Value', String.valueOf(accountAnnualRevenue))
         };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
+        List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
         RecordValidator.ValidationRuleResult result = results.get(0);
@@ -254,7 +298,7 @@ private class RecordValidatorTest {
         try {
             validator.validate();
             System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
+        } catch (RecordValidator.RecordValidatorException ex) {
             System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
         }
     }
@@ -269,12 +313,12 @@ private class RecordValidatorTest {
         RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
         rule.ConditionLogicType__c = 'OR';
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('name_condition', 'Name', '==', 'Value', accountName1),
-            createMockRuleCondition('revenue_condition', 'Name', '==', 'Value', accountName2)
+            createMockRuleCondition('name_condition', 'Name', 'EQUAL_TO', 'Value', accountName1),
+            createMockRuleCondition('revenue_condition', 'Name', 'EQUAL_TO', 'Value', accountName2)
         };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
+        List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
         RecordValidator.ValidationRuleResult result = results.get(0);
@@ -284,7 +328,7 @@ private class RecordValidatorTest {
         try {
             validator.validate();
             System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
+        } catch (RecordValidator.RecordValidatorException ex) {
             System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
         }
     }
@@ -302,24 +346,23 @@ private class RecordValidatorTest {
         rule.ConditionLogicType__c = 'Custom';
         rule.CustomConditionLogic__c = '((1 OR 2) AND 3)';
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('name_1_condition', 'Name', '==', 'Value', accountName1),
-            createMockRuleCondition('name_2_condition', 'Name', '==', 'Value', accountName2),
-            createMockRuleCondition('revenue_condition', 'AnnualRevenue', '>=', 'Value', String.valueOf(accountAnnualRevenue))
+            createMockRuleCondition('name_1_condition', 'Name', 'EQUAL_TO', 'Value', accountName1),
+            createMockRuleCondition('name_2_condition', 'Name', 'EQUAL_TO', 'Value', accountName2),
+            createMockRuleCondition('revenue_condition', 'AnnualRevenue', 'GREATER_THAN_OR_EQUAL_TO', 'Value', String.valueOf(accountAnnualRevenue))
         };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
-        List<RecordValidator.ValidationRuleResult> results = validator.getResults();
+        List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
         System.assertEquals(1, results.size(), 'Expected 1 validation rule result');
 
         RecordValidator.ValidationRuleResult result = results.get(0);
         System.assertEquals(true, result.hasError, result);
         System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
 
-
         try {
             validator.validate();
             System.assert(false, 'Exception expected on line above');
-        } catch(RecordValidator.RecordValidatorException ex) {
+        } catch (RecordValidator.RecordValidatorException ex) {
             System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
         }
     }

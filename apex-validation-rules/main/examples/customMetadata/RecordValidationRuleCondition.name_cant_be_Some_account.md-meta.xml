@@ -16,7 +16,7 @@
     </values>
     <values>
         <field>Operator__c</field>
-        <value xsi:type="xsd:string">==</value>
+        <value xsi:type="xsd:string">EQUAL_TO</value>
     </values>
     <values>
         <field>SortOrder__c</field>
