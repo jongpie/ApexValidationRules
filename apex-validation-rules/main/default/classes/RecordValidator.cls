@@ -258,23 +258,19 @@ public without sharing class RecordValidator {
 
             switch on field.getDescribe().getType() {
                 when Boolean {
-                    return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue));
+                    return this.compareBoolean((Boolean) recordFieldValue, this.getAsBoolean(comparisonValue));
                 }
                 when Currency, Double, Integer, Percent {
-                    return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
+                    return this.compareDecimal((Decimal) recordFieldValue, this.getAsDecimal(comparisonValue));
                 }
                 when Date {
-                    Date recordFieldDate = this.getAsDate(recordFieldValue);
-                    Date comparisonDate = this.getAsDate(comparisonValue);
-                    return this.compareDate(recordFieldDate, comparisonDate);
+                    return this.compareDate((Date) recordFieldValue, this.getAsDate(comparisonValue));
                 }
                 when Datetime {
-                    Datetime recordFieldDatetime = this.getAsDatetime(recordFieldValue);
-                    Datetime comparisonDatetime = this.getAsDatetime(comparisonValue);
-                    return this.compareDatetime(recordFieldDatetime, comparisonDatetime);
+                    return this.compareDatetime((Datetime) recordFieldValue, this.getAsDatetime(comparisonValue));
                 }
                 when Email, Id, MultiPicklist, Phone, Picklist, Reference, String, Combobox, TextArea, Url {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
+                    return this.compareString((String) recordFieldValue, String.valueOf(comparisonValue));
                 }
                 when else {
                     throw new RecordValidatorException('Could not process field path: ' + this.ruleCondition.FieldPath__c);
@@ -305,6 +301,51 @@ public without sharing class RecordValidator {
                 when else {
                     throw new RecordValidatorException('Unknown Value Type, cannot parse comparison value');
                 }
+            }
+        }
+
+        // Helper methods for dealing with converting field values & strings
+        // (stored in CMDT) to the appropriate data type
+        private Boolean getAsBoolean(Object booleanValue) {
+            if (booleanValue == null) {
+                return null;
+            } else if (booleanValue instanceof Boolean) {
+                return (Boolean) booleanValue;
+            } else {
+                return Boolean.valueOf(booleanValue);
+            }
+        }
+
+        private Date getAsDate(Object dateValue) {
+            if (dateValue == null) {
+                return null;
+            } else if (dateValue instanceof Date) {
+                return (Date) dateValue;
+            } else {
+                String dateString = (String) dateValue;
+                return (Date) JSON.deserialize(dateString, Date.class);
+            }
+        }
+
+        private Datetime getAsDatetime(Object datetimeValue) {
+            if (datetimeValue == null) {
+                return null;
+            } else if (datetimeValue instanceof Datetime) {
+                return (Datetime) datetimeValue;
+            } else {
+                String datetimeString = (String) datetimeValue;
+                return (Datetime) JSON.deserialize(datetimeString, Datetime.class);
+            }
+        }
+
+        private Decimal getAsDecimal(Object decimalValue) {
+            if (decimalValue == null) {
+                return null;
+            } else if (decimalValue instanceof Decimal) {
+                return (Decimal) decimalValue;
+            } else {
+                String decimalString = (String) decimalValue;
+                return (Decimal) JSON.deserialize(decimalString, Decimal.class);
             }
         }
 
@@ -379,7 +420,7 @@ public without sharing class RecordValidator {
             }
         }
 
-        private Boolean compareDouble(Double recordFieldValue, Double comparisonValue) {
+        private Boolean compareDecimal(Decimal recordFieldValue, Decimal comparisonValue) {
             switch on this.ruleCondition.Operator__c {
                 when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
@@ -400,7 +441,7 @@ public without sharing class RecordValidator {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unsupported operator for Double: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Decimal: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
@@ -426,30 +467,6 @@ public without sharing class RecordValidator {
                     throw new RecordValidatorException('Unsupported operator for String: ' + this.ruleCondition.Operator__c);
                 }
             }
-        }
-
-        private Date getAsDate(Object dateValue) {
-            String dateString;
-            if (dateValue == null) {
-                return null;
-            } else if (dateValue instanceof String) {
-                dateString = (String) dateValue;
-            } else {
-                dateString = JSON.serialize(dateValue);
-            }
-            return (Date) JSON.deserialize(dateString, Date.class);
-        }
-
-        private Datetime getAsDatetime(Object datetimeValue) {
-            String datetimeString;
-            if (datetimeValue == null) {
-                return null;
-            } else if (datetimeValue instanceof String) {
-                datetimeString = (String) datetimeValue;
-            } else {
-                datetimeString = JSON.serialize(datetimeValue);
-            }
-            return (Datetime) JSON.deserialize(datetimeString, Datetime.class);
         }
     }
 
