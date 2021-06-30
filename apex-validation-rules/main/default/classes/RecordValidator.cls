@@ -4,15 +4,16 @@
  *******************************************************************************************************/
 
 public without sharing class RecordValidator {
-    private static final Map<Schema.SObjectType, List<RecordValidationRule__mdt>> CACHED_RULES_BY_SOBJECT_TYPE = new Map<Schema.SObjectType, List<RecordValidationRule__mdt>>();
+    private static final Set<Schema.SObjectType> QUERIED_SOBJECT_TYPES = new Set<Schema.SObjectType>();
 
-    private final List<String> ruleDeveloperNames = new List<String>();
     private final Map<String, RecordValidationRule__mdt> rulesByDeveloperName = new Map<String, RecordValidationRule__mdt>();
     private final Map<String, List<RecordValidationRuleCondition__mdt>> conditionsByRuleDeveloperName = new Map<String, List<RecordValidationRuleCondition__mdt>>();
+    private final Map<String, List<RecordValidationRuleTranslation__mdt>> translationsByRuleDeveloperName = new Map<String, List<RecordValidationRuleTranslation__mdt>>();
 
     private List<SObject> records;
     private Schema.SObjectType sobjectType;
     private Boolean rulesProvided = false;
+    private String languageLocaleKey = UserInfo.getLanguage();
 
     public RecordValidator(SObject record) {
         this(new List<SObject>{ record });
@@ -24,9 +25,22 @@ public without sharing class RecordValidator {
     }
 
     public RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        this.ruleDeveloperNames.add(rule.DeveloperName);
+        return this.setRule(rule, conditions, null);
+    }
+
+    public RecordValidator setRule(
+        RecordValidationRule__mdt rule,
+        List<RecordValidationRuleCondition__mdt> conditions,
+        List<RecordValidationRuleTranslation__mdt> translations
+    ) {
         this.rulesByDeveloperName.put(rule.DeveloperName, rule);
         this.conditionsByRuleDeveloperName.put(rule.DeveloperName, conditions);
+        this.translationsByRuleDeveloperName.put(rule.DeveloperName, translations);
+        return this;
+    }
+
+    public RecordValidator setLanguage(String languageLocaleKey) {
+        this.languageLocaleKey = languageLocaleKey;
         return this;
     }
 
@@ -35,22 +49,22 @@ public without sharing class RecordValidator {
     }
 
     public List<ValidationRuleResult> validate(Boolean shouldThrowException) {
-        if (this.ruleDeveloperNames.isEmpty() == true && rulesProvided == false) {
+        if (this.rulesByDeveloperName.isEmpty() == true && rulesProvided == false) {
             this.loadConfiguredRules(this.sobjectType);
         }
 
         // If there aren't any rules loaded or provided, then something isn't right
-        if (shouldThrowException == true && this.ruleDeveloperNames.isEmpty() == true) {
+        if (shouldThrowException == true && this.rulesByDeveloperName.isEmpty() == true) {
             throw new RecordValidatorException('No rules provided or configured, cannot validate');
         }
 
         List<ValidationRuleResult> results = new List<ValidationRuleResult>();
         for (SObject record : this.records) {
-            // record.recalculateFormulas();
-            for (String ruleDeveloperName : this.ruleDeveloperNames) {
+            for (String ruleDeveloperName : this.rulesByDeveloperName.keySet()) {
                 RecordValidationRule__mdt rule = this.rulesByDeveloperName.get(ruleDeveloperName);
                 List<RecordValidationRuleCondition__mdt> ruleConditions = this.conditionsByRuleDeveloperName.get(rule.DeveloperName);
-                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions);
+                List<RecordValidationRuleTranslation__mdt> ruleTranslations = this.translationsByRuleDeveloperName.get(rule.DeveloperName);
+                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions, this.languageLocaleKey, ruleTranslations);
 
                 if (shouldThrowException == true && ruleResult.hasError == true) {
                     throw new RecordValidatorException(ruleResult.errorMessage);
@@ -64,7 +78,7 @@ public without sharing class RecordValidator {
 
     // Private methods
     private void loadConfiguredRules(Schema.SObjectType sobjectType) {
-        if (CACHED_RULES_BY_SOBJECT_TYPE.containsKey(sobjectType)) {
+        if (QUERIED_SOBJECT_TYPES.contains(sobjectType)) {
             return;
         }
 
@@ -76,17 +90,17 @@ public without sharing class RecordValidator {
                 CustomConditionLogic__c,
                 ErrorMessage__c,
                 (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM RecordValidationRuleConditions__r ORDER BY SortOrder__c),
-                (SELECT Language__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
+                (SELECT LanguageLocaleKey__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
             FROM RecordValidationRule__mdt
             WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
         ];
 
         // Add to the current instance's cache
         for (RecordValidationRule__mdt rule : configuredRules) {
-            this.setRule(rule, rule.RecordValidationRuleConditions__r);
+            this.setRule(rule, rule.RecordValidationRuleConditions__r, rule.RecordValidationRuleTranslations__r);
         }
         // Add to the static cache
-        CACHED_RULES_BY_SOBJECT_TYPE.put(sobjectType, configuredRules);
+        QUERIED_SOBJECT_TYPES.add(sobjectType);
     }
 
     public class RecordValidatorException extends Exception {
@@ -107,11 +121,21 @@ public without sharing class RecordValidator {
 
         private RecordValidationRule__mdt rule;
         private List<RecordValidationRuleCondition__mdt> ruleConditions;
+        private List<RecordValidationRuleTranslation__mdt> ruleTranslations;
+        private String languageLocaleKey;
 
-        public ValidationRuleResult(SObject record, RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> ruleConditions) {
+        public ValidationRuleResult(
+            SObject record,
+            RecordValidationRule__mdt rule,
+            List<RecordValidationRuleCondition__mdt> ruleConditions,
+            String languageLocaleKey,
+            List<RecordValidationRuleTranslation__mdt> ruleTranslations
+        ) {
             this.record = record;
             this.rule = rule;
             this.ruleConditions = ruleConditions;
+            this.languageLocaleKey = languageLocaleKey;
+            this.ruleTranslations = ruleTranslations;
 
             this.conditions = new List<String>();
             this.conditionsLogic = this.getRuleConditionsLogic();
@@ -137,12 +161,12 @@ public without sharing class RecordValidator {
         }
 
         private String getErrorMessage() {
-            if (this.rule.RecordValidationRuleTranslations__r.isEmpty() == true) {
+            if (String.isBlank(this.languageLocaleKey) || this.ruleTranslations == null || this.ruleTranslations.isEmpty() == true) {
                 return this.rule.ErrorMessage__c;
             }
 
-            for (RecordValidationRuleTranslation__mdt translation : this.rule.RecordValidationRuleTranslations__r) {
-                if (translation.Language__c == UserInfo.getLanguage()) {
+            for (RecordValidationRuleTranslation__mdt translation : this.ruleTranslations) {
+                if (this.languageLocaleKey.toLowerCase() == translation.LanguageLocaleKey__c.toLowerCase()) {
                     return translation.ErrorMessage__c;
                 }
             }

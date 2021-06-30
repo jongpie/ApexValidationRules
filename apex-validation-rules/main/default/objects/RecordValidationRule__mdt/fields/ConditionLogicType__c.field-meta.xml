@@ -3,7 +3,7 @@
     <fullName>ConditionLogicType__c</fullName>
     <externalId>false</externalId>
     <fieldManageability>SubscriberControlled</fieldManageability>
-    <label>Conditions Logic Type</label>
+    <label>Condition Logic Type</label>
     <required>true</required>
     <type>Picklist</type>
     <valueSet>

@@ -25,6 +25,10 @@ private class RecordValidatorTests {
         );
     }
 
+    static RecordValidationRuleTranslation__mdt createMockRuleTranslation(String language, String translatedErrorMessage) {
+        return new RecordValidationRuleTranslation__mdt(ErrorMessage__c = translatedErrorMessage, LanguageLocaleKey__c = language);
+    }
+
     // Simpler tests - each test is for 1 field with a different data type
     @isTest
     static void validateForRuleWithBooleanFieldAndAllOperators() {
@@ -350,6 +354,46 @@ private class RecordValidatorTests {
             System.assert(false, 'Exception expected on line above');
         } catch (RecordValidator.RecordValidatorException ex) {
             System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+        }
+    }
+
+    // Translation tests
+    @isTest
+    static void validateWithTranslationForRuleWithStringFieldAndAllOperators() {
+        String fieldPath = 'Name';
+        String accountName = 'Some account';
+        Account record = new Account(Name = 'Test account');
+        record.Name = accountName;
+
+        Map<String, String> operatorToValue = new Map<String, String>{
+            'EQUAL_TO' => accountName,
+            'NOT_EQUAL_TO' => 'something else',
+            'CONTAINS' => accountName.left(3)
+        };
+        for (String operator : operatorToValue.keySet()) {
+            String value = operatorToValue.get(operator);
+
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+            RecordValidationRuleTranslation__mdt translation = createMockRuleTranslation('es', '¡Que horrible!');
+            List<RecordValidationRuleTranslation__mdt> translations = new List<RecordValidationRuleTranslation__mdt>{ translation };
+
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions, translations).setLanguage(translation.LanguageLocaleKey__c);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
+
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertNotEquals(translation.ErrorMessage__c, rule.ErrorMessage__c);
+            System.assertEquals(translation.ErrorMessage__c, result.errorMessage, result);
+
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(translation.ErrorMessage__c), ex);
+            }
         }
     }
 }

@@ -4,11 +4,13 @@
  *******************************************************************************************************/
 
 public without sharing class FlowRecordValidator {
-    private static final Map<RecordValidationRule__mdt, List<RecordValidationRuleCondition__mdt>> MOCK_RULE_TO_CONDITIONS = new Map<RecordValidationRule__mdt, List<RecordValidationRuleCondition__mdt>>();
+    private static final Map<String, RecordValidationRule__mdt> MOCK_RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
+    private static final Map<String, List<RecordValidationRuleCondition__mdt>> MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleCondition__mdt>>();
 
     @testVisible
     private static void setMockRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        MOCK_RULE_TO_CONDITIONS.put(rule, conditions);
+        MOCK_RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
+        MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
     }
 
     public class FlowInput {
@@ -31,9 +33,10 @@ public without sharing class FlowRecordValidator {
             FlowOutput output = new FlowOutput();
             RecordValidator validator = new RecordValidator(input.record);
 
-            if (MOCK_RULE_TO_CONDITIONS.isEmpty() == false) {
-                for (RecordValidationRule__mdt rule : MOCK_RULE_TO_CONDITIONS.keySet()) {
-                    List<RecordValidationRuleCondition__mdt> conditions = MOCK_RULE_TO_CONDITIONS.get(rule);
+            if (MOCK_RULES_BY_DEVELOPER_NAME.isEmpty() == false) {
+                for (String ruleDeveloperName : MOCK_RULES_BY_DEVELOPER_NAME.keySet()) {
+                    RecordValidationRule__mdt rule = MOCK_RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
+                    List<RecordValidationRuleCondition__mdt> conditions = MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME.get(ruleDeveloperName);
 
                     validator.setRule(rule, conditions);
                 }
