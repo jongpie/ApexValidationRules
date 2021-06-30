@@ -177,7 +177,11 @@ private class RecordValidatorTest {
         Account record = new Account(Name = 'Test account');
         record.Name = accountName;
 
-        Map<String, String> operatorToValue = new Map<String, String>{ 'EQUAL_TO' => accountName, 'NOT_EQUAL_TO' => 'something else' };
+        Map<String, String> operatorToValue = new Map<String, String>{
+            'EQUAL_TO' => accountName,
+            'NOT_EQUAL_TO' => 'something else',
+            'CONTAINS' => accountName.left(3)
+        };
         for (String operator : operatorToValue.keySet()) {
             String value = operatorToValue.get(operator);
 

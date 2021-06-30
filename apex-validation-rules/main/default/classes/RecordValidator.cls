@@ -23,6 +23,13 @@ public without sharing class RecordValidator {
         this.sobjectType = records.get(0).getSObjectType();
     }
 
+    public RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
+        this.ruleDeveloperNames.add(rule.DeveloperName);
+        this.rulesByDeveloperName.put(rule.DeveloperName, rule);
+        this.conditionsByRuleDeveloperName.put(rule.DeveloperName, conditions);
+        return this;
+    }
+
     public List<ValidationRuleResult> validate() {
         return this.validate(true);
     }
@@ -53,15 +60,6 @@ public without sharing class RecordValidator {
             }
         }
         return results;
-    }
-
-    // Private testVisible methods for mocking
-    @testVisible
-    private RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        this.ruleDeveloperNames.add(rule.DeveloperName);
-        this.rulesByDeveloperName.put(rule.DeveloperName, rule);
-        this.conditionsByRuleDeveloperName.put(rule.DeveloperName, conditions);
-        return this;
     }
 
     // Private methods
@@ -95,6 +93,7 @@ public without sharing class RecordValidator {
     }
 
     public class ValidationRuleResult {
+        public SObject record { get; private set; }
         public List<String> conditions { get; private set; }
         public String conditionsLogic { get; private set; }
         public String conditionsLogicType { get; private set; }
@@ -105,15 +104,8 @@ public without sharing class RecordValidator {
             }
             private set;
         }
-        // public Id recordId {
-        //     get {
-        //         return this.record.Id;
-        //     }
-        //     private set;
-        // }
 
-        public SObject record;
-        public RecordValidationRule__mdt rule;
+        private RecordValidationRule__mdt rule;
         private List<RecordValidationRuleCondition__mdt> ruleConditions;
 
         public ValidationRuleResult(SObject record, RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> ruleConditions) {
