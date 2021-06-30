@@ -47,8 +47,7 @@ public without sharing class FlowRecordValidator {
     @testVisible
     private static void setMockRule(
         RecordValidationRule__mdt rule,
-        List<RecordValidationRuleCondition__mdt> conditions,
-        List<RecordValidationRuleTranslation__mdt> translations
+        List<RecordValidationRuleCondition__mdt> conditions
     ) {
         setMockRule(rule, conditions, null);
     }

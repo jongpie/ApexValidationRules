@@ -447,8 +447,10 @@ public without sharing class RecordValidator {
         }
     }
 
-    //https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
-    public class BooleanExpression {
+    // Credit goes to this StackExchange post for the original BooleanExpression class -
+    // below is a modified version of the class
+    // https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
+    private class BooleanExpression {
         public Boolean evaluate(String x) {
             x = simplify(x);
 
