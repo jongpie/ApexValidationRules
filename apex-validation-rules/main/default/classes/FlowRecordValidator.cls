@@ -6,7 +6,7 @@
 public without sharing class FlowRecordValidator {
     private static final Map<String, RecordValidationRule__mdt> MOCK_RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
     private static final Map<String, List<RecordValidationRuleCondition__mdt>> MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleCondition__mdt>>();
-    private static final Map<String, List<RecordValidationRuleTranslation__mdt>> MOCK_TRAMSLATTIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleTranslation__mdt>>();
+    private static final Map<String, List<RecordValidationRuleTranslation__mdt>> MOCK_TRANSLATTIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleTranslation__mdt>>();
 
     public class FlowInput {
         @InvocableVariable(required=true label='Record')
@@ -61,6 +61,6 @@ public without sharing class FlowRecordValidator {
     ) {
         MOCK_RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
         MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
-        MOCK_TRAMSLATTIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, translations);
+        MOCK_TRANSLATTIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, translations);
     }
 }
