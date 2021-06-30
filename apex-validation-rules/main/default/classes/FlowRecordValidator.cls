@@ -12,7 +12,7 @@ public without sharing class FlowRecordValidator {
         @InvocableVariable(required=true label='Record')
         public SObject record;
 
-        @InvocableVariable(required = true label='Throw Error')
+        @InvocableVariable(required=true label='Throw Error')
         public Boolean shouldThrowException = true;
     }
 
@@ -49,10 +49,7 @@ public without sharing class FlowRecordValidator {
 
     // Private testVisible methods for setting mock CMDT records
     @testVisible
-    private static void setMockRule(
-        RecordValidationRule__mdt rule,
-        List<RecordValidationRuleCondition__mdt> conditions
-    ) {
+    private static void setMockRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
         setMockRule(rule, conditions, null);
     }
 
