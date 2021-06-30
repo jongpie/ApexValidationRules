@@ -12,8 +12,8 @@ public without sharing class FlowRecordValidator {
         @InvocableVariable(required=true label='Record')
         public SObject record;
 
-        @InvocableVariable(label='Throw Error')
-        public Boolean shouldThrowException;
+        @InvocableVariable(required = true label='Throw Error')
+        public Boolean shouldThrowException = true;
     }
 
     public class FlowOutput {
@@ -21,7 +21,11 @@ public without sharing class FlowRecordValidator {
         public List<RecordValidator.ValidationRuleResult> results;
     }
 
-    @InvocableMethod
+    @InvocableMethod(
+        category='Record Validation'
+        label='Validate SObject Record'
+        description='Validates a record, using rules & conditions defined in RecordValidationRule__mdt'
+    )
     public static List<FlowOutput> validate(List<FlowInput> inputs) {
         List<FlowOutput> outputs = new List<FlowOutput>();
         for (FlowInput input : inputs) {
