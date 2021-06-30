@@ -6,12 +6,7 @@
 public without sharing class FlowRecordValidator {
     private static final Map<String, RecordValidationRule__mdt> MOCK_RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
     private static final Map<String, List<RecordValidationRuleCondition__mdt>> MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleCondition__mdt>>();
-
-    @testVisible
-    private static void setMockRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        MOCK_RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
-        MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
-    }
+    private static final Map<String, List<RecordValidationRuleTranslation__mdt>> MOCK_TRAMSLATTIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleTranslation__mdt>>();
 
     public class FlowInput {
         @InvocableVariable(required=true label='Record')
@@ -46,5 +41,26 @@ public without sharing class FlowRecordValidator {
             outputs.add(output);
         }
         return outputs;
+    }
+
+    // Private testVisible methods for setting mock CMDT records
+    @testVisible
+    private static void setMockRule(
+        RecordValidationRule__mdt rule,
+        List<RecordValidationRuleCondition__mdt> conditions,
+        List<RecordValidationRuleTranslation__mdt> translations
+    ) {
+        setMockRule(rule, conditions, null);
+    }
+
+    @testVisible
+    private static void setMockRule(
+        RecordValidationRule__mdt rule,
+        List<RecordValidationRuleCondition__mdt> conditions,
+        List<RecordValidationRuleTranslation__mdt> translations
+    ) {
+        MOCK_RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
+        MOCK_CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
+        MOCK_TRAMSLATTIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, translations);
     }
 }

@@ -379,7 +379,7 @@ private class RecordValidatorTests {
             RecordValidationRuleTranslation__mdt translation = createMockRuleTranslation('es', '¡Que horrible!');
             List<RecordValidationRuleTranslation__mdt> translations = new List<RecordValidationRuleTranslation__mdt>{ translation };
 
-            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions, translations).setLanguage(translation.LanguageLocaleKey__c);
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions, translations).setLanguageLocale(translation.LanguageLocaleKey__c);
             List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
             System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
 

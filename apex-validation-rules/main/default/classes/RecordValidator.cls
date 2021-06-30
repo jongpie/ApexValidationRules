@@ -39,7 +39,7 @@ public without sharing class RecordValidator {
         return this;
     }
 
-    public RecordValidator setLanguage(String languageLocaleKey) {
+    public RecordValidator setLanguageLocale(String languageLocaleKey) {
         this.languageLocaleKey = languageLocaleKey;
         return this;
     }
@@ -50,7 +50,7 @@ public without sharing class RecordValidator {
 
     public List<ValidationRuleResult> validate(Boolean shouldThrowException) {
         if (this.rulesByDeveloperName.isEmpty() == true && rulesProvided == false) {
-            this.loadConfiguredRules(this.sobjectType);
+            this.loadConfiguredRules();
         }
 
         // If there aren't any rules loaded or provided, then something isn't right
@@ -77,8 +77,8 @@ public without sharing class RecordValidator {
     }
 
     // Private methods
-    private void loadConfiguredRules(Schema.SObjectType sobjectType) {
-        if (QUERIED_SOBJECT_TYPES.contains(sobjectType)) {
+    private void loadConfiguredRules() {
+        if (QUERIED_SOBJECT_TYPES.contains(this.sobjectType)) {
             return;
         }
 
@@ -89,7 +89,11 @@ public without sharing class RecordValidator {
                 ConditionLogicType__c,
                 CustomConditionLogic__c,
                 ErrorMessage__c,
-                (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM RecordValidationRuleConditions__r ORDER BY SortOrder__c),
+                (
+                    SELECT FieldPath__c, Operator__c, ValueType__c, Value__c
+                    FROM RecordValidationRuleConditions__r
+                    ORDER BY SortOrder__c NULLS LAST, DeveloperName
+                ),
                 (SELECT LanguageLocaleKey__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
             FROM RecordValidationRule__mdt
             WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
@@ -100,7 +104,7 @@ public without sharing class RecordValidator {
             this.setRule(rule, rule.RecordValidationRuleConditions__r, rule.RecordValidationRuleTranslations__r);
         }
         // Add to the static cache
-        QUERIED_SOBJECT_TYPES.add(sobjectType);
+        QUERIED_SOBJECT_TYPES.add(this.sobjectType);
     }
 
     public class RecordValidatorException extends Exception {
@@ -228,7 +232,7 @@ public without sharing class RecordValidator {
             this.ruleCondition = ruleCondition;
             this.sobjectApiName = this.record.getSObjectType().getDescribe().getName();
 
-            this.hasError = this.getHasError();
+            this.hasError = this.hasError();
         }
 
         public String getCondition() {
@@ -242,7 +246,7 @@ public without sharing class RecordValidator {
                 ')';
         }
 
-        public Boolean getHasError() {
+        public Boolean hasError() {
             if (this.ruleCondition.ValueType__c == 'RegEx') {
                 return this.getHasRegExError();
             }
