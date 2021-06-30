@@ -5,10 +5,6 @@
 
 @isTest
 private class RecordValidatorTest {
-    static RecordValidationRule__mdt createMockRule(String developerName, SObjectType sobjectType) {
-        return createMockRule();
-    }
-
     static RecordValidationRule__mdt createMockRule() {
         return new RecordValidationRule__mdt(
             ConditionLogicType__c = 'AND',
@@ -16,10 +12,6 @@ private class RecordValidatorTest {
             ErrorMessage__c = 'Whoops, an error occurred',
             IsActive__c = true
         );
-    }
-
-    static RecordValidationRuleCondition__mdt createMockRuleCondition(String developerName, String fieldPath, String operator, String valueType, String value) {
-        return createMockRuleCondition(fieldPath, operator, valueType, value);
     }
 
     static RecordValidationRuleCondition__mdt createMockRuleCondition(String fieldPath, String operator, String valueType, Object value) {
@@ -31,10 +23,6 @@ private class RecordValidatorTest {
             Value__c = valueString,
             ValueType__c = valueType
         );
-    }
-
-    static Account createMockAccount() {
-        return new Account(Name = 'Test account');
     }
 
     // Simpler tests - each test is for 1 field with a different data type
@@ -147,7 +135,7 @@ private class RecordValidatorTest {
     static void validateForRuleWithDoubleFieldAndAllOperators() {
         String fieldPath = 'AnnualRevenue';
         Double accountAnnualRevenue = 123000;
-        Account record = createMockAccount();
+        Account record = new Account(Name = 'Test account');
         record.AnnualRevenue = accountAnnualRevenue;
 
         Map<String, Double> operatorToValue = new Map<String, Double>{
@@ -186,7 +174,7 @@ private class RecordValidatorTest {
     static void validateForRuleWithStringFieldAndAllOperators() {
         String fieldPath = 'Name';
         String accountName = 'Some account';
-        Account record = createMockAccount();
+        Account record = new Account(Name = 'Test account');
         record.Name = accountName;
 
         Map<String, String> operatorToValue = new Map<String, String>{ 'EQUAL_TO' => accountName, 'NOT_EQUAL_TO' => 'something else' };
@@ -221,14 +209,8 @@ private class RecordValidatorTest {
         User manager = new User(IsActive = managerIsActive);
         User user = new User(Id = UserInfo.getUserId(), Manager = manager);
 
-        RecordValidationRule__mdt rule = createMockRule('user_test', Schema.User.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition(
-            'manager_isactive_condition',
-            'Manager.IsActive',
-            'EQUAL_TO',
-            'Value',
-            String.valueOf(managerIsActive)
-        );
+        RecordValidationRule__mdt rule = createMockRule();
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('Manager.IsActive', 'EQUAL_TO', 'Value', managerIsActive);
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
         RecordValidator validator = new RecordValidator(user).setRule(rule, conditions);
@@ -250,11 +232,11 @@ private class RecordValidatorTest {
     @isTest
     static void validateForRuleWithOneRegexFieldCondition() {
         String accountName = '123';
-        Account account = createMockAccount();
+        Account account = new Account(Name = 'Test account');
         account.Name = accountName;
 
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
-        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('regex_condition', 'Name', '^[0-9]+$', 'RegEx', accountName);
+        RecordValidationRule__mdt rule = createMockRule();
+        RecordValidationRuleCondition__mdt condition = createMockRuleCondition('Name', '^[0-9]+$', 'RegEx', accountName);
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
@@ -277,14 +259,14 @@ private class RecordValidatorTest {
     static void validateForRuleWithAndConditions() {
         String accountName = 'Some account';
         Integer accountAnnualRevenue = 123000;
-        Account account = createMockAccount();
+        Account account = new Account(Name = 'Test account');
         account.Name = accountName;
         account.AnnualRevenue = accountAnnualRevenue;
 
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
+        RecordValidationRule__mdt rule = createMockRule();
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('name_condition', 'Name', 'EQUAL_TO', 'Value', accountName),
-            createMockRuleCondition('revenue_condition', 'AnnualRevenue', 'GREATER_THAN_OR_EQUAL_TO', 'Value', String.valueOf(accountAnnualRevenue))
+            createMockRuleCondition('Name', 'EQUAL_TO', 'Value', accountName),
+            createMockRuleCondition('AnnualRevenue', 'GREATER_THAN_OR_EQUAL_TO', 'Value', accountAnnualRevenue)
         };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
@@ -307,14 +289,14 @@ private class RecordValidatorTest {
     static void validateForRuleWithOrConditions() {
         String accountName1 = 'Some account';
         String accountName2 = 'another account';
-        Account account = createMockAccount();
+        Account account = new Account(Name = 'Test account');
         account.Name = accountName1;
 
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
+        RecordValidationRule__mdt rule = createMockRule();
         rule.ConditionLogicType__c = 'OR';
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('name_condition', 'Name', 'EQUAL_TO', 'Value', accountName1),
-            createMockRuleCondition('revenue_condition', 'Name', 'EQUAL_TO', 'Value', accountName2)
+            createMockRuleCondition('Name', 'EQUAL_TO', 'Value', accountName1),
+            createMockRuleCondition('Name', 'EQUAL_TO', 'Value', accountName2)
         };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
@@ -338,17 +320,17 @@ private class RecordValidatorTest {
         String accountName1 = 'Some account';
         String accountName2 = 'another account';
         Integer accountAnnualRevenue = 123000;
-        Account account = createMockAccount();
+        Account account = new Account(Name = 'Test account');
         account.Name = accountName1;
         account.AnnualRevenue = accountAnnualRevenue;
 
-        RecordValidationRule__mdt rule = createMockRule('account_test', Schema.Account.SObjectType);
+        RecordValidationRule__mdt rule = createMockRule();
         rule.ConditionLogicType__c = 'Custom';
         rule.CustomConditionLogic__c = '((1 OR 2) AND 3)';
         List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{
-            createMockRuleCondition('name_1_condition', 'Name', 'EQUAL_TO', 'Value', accountName1),
-            createMockRuleCondition('name_2_condition', 'Name', 'EQUAL_TO', 'Value', accountName2),
-            createMockRuleCondition('revenue_condition', 'AnnualRevenue', 'GREATER_THAN_OR_EQUAL_TO', 'Value', String.valueOf(accountAnnualRevenue))
+            createMockRuleCondition('Name', 'EQUAL_TO', 'Value', accountName1),
+            createMockRuleCondition('Name', 'EQUAL_TO', 'Value', accountName2),
+            createMockRuleCondition('AnnualRevenue', 'GREATER_THAN_OR_EQUAL_TO', 'Value', accountAnnualRevenue)
         };
 
         RecordValidator validator = new RecordValidator(account).setRule(rule, conditions);
