@@ -31,7 +31,7 @@
                 <label>greater than</label>
             </value>
             <value>
-                <fullName>LESS_THAN OR EQUAL_TO</fullName>
+                <fullName>LESS_THAN_OR_EQUAL_TO</fullName>
                 <default>false</default>
                 <label>less than or equal to</label>
             </value>
@@ -39,6 +39,21 @@
                 <fullName>GREATER_THAN_OR_EQUAL_TO</fullName>
                 <default>false</default>
                 <label>greater than or equal to</label>
+            </value>
+            <value>
+                <fullName>STARTS_WITH</fullName>
+                <default>false</default>
+                <label>starts with</label>
+            </value>
+            <value>
+                <fullName>CONTAINS</fullName>
+                <default>false</default>
+                <label>contains</label>
+            </value>
+            <value>
+                <fullName>ENDS_WITH</fullName>
+                <default>false</default>
+                <label>ends with</label>
             </value>
         </valueSetDefinition>
     </valueSet>

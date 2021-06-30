@@ -413,8 +413,14 @@ public without sharing class RecordValidator {
                 when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
+                when 'STARTS_WITH' {
+                    return recordFieldValue.startsWith(comparisonValue);
+                }
                 when 'CONTAINS' {
                     return recordFieldValue.contains(comparisonValue);
+                }
+                when 'ENDS_WITH' {
+                    return recordFieldValue.endsWith(comparisonValue);
                 }
                 when else {
                     throw new RecordValidatorException('Unsupported operator for String: ' + this.ruleCondition.Operator__c);
