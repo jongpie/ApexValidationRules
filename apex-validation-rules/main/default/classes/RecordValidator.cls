@@ -1,7 +1,7 @@
-/*****************************************************************************************************
- * This file is part of the Apex Validation Rules project, released under the MIT License.            *
+/********************************************************************************************************
+ * This file is part of the Apex Validation Rules project, released under the MIT License.              *
  * See LICENSE file or go to https://github.com/jongpie/RecordValidationRules for full license details. *
- *****************************************************************************************************/
+ *******************************************************************************************************/
 
 public without sharing class RecordValidator {
     private static final Map<Schema.SObjectType, List<RecordValidationRule__mdt>> CACHED_RULES_BY_SOBJECT_TYPE = new Map<Schema.SObjectType, List<RecordValidationRule__mdt>>();
