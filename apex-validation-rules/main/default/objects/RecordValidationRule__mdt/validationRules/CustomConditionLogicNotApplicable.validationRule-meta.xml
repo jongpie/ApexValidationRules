@@ -7,5 +7,5 @@
   NOT(ISBLANK(CustomConditionLogic__c))
 )</errorConditionFormula>
     <errorDisplayField>CustomConditionLogic__c</errorDisplayField>
-    <errorMessage>Custom Condition Logic can only be populated when Conditions Logic = &apos;Custom&apos;</errorMessage>
+    <errorMessage>Custom Condition Logic can only be populated when Condition Logic = &apos;Custom&apos;</errorMessage>
 </ValidationRule>
