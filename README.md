@@ -19,7 +19,7 @@ This is useful in scenarios where standard validation rules cannot be used
 1. On-demand validation: standard validation rules only run on during DML statements. Apex Validation Rules can be executed at any point in your code.
 2. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes.
 
-2. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes
+3. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes
 
 ## Examples
 
