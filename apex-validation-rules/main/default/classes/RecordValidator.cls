@@ -260,20 +260,20 @@ public without sharing class RecordValidator {
             Object recordFieldValue = this.getFieldValue();
             Object comparisonValue = this.getComparisonValue();
 
-            switch on field.getDescribe().getType() {
-                when Boolean {
+            switch on field.getDescribe().getSoapType() {
+                when BOOLEAN {
                     return this.compareBoolean((Boolean) recordFieldValue, this.getAsBoolean(comparisonValue));
                 }
-                when Currency, Double, Integer, Percent {
+                when DOUBLE, INTEGER {
                     return this.compareDecimal((Decimal) recordFieldValue, this.getAsDecimal(comparisonValue));
                 }
-                when Date {
+                when DATE {
                     return this.compareDate((Date) recordFieldValue, this.getAsDate(comparisonValue));
                 }
-                when Datetime {
+                when DATETIME {
                     return this.compareDatetime((Datetime) recordFieldValue, this.getAsDatetime(comparisonValue));
                 }
-                when Email, Id, MultiPicklist, Phone, Picklist, Reference, String, Combobox, TextArea, Url {
+                when STRING, ID {
                     return this.compareString((String) recordFieldValue, String.valueOf(comparisonValue));
                 }
                 when else {
