@@ -64,8 +64,8 @@ public without sharing class RecordValidator {
             for (String ruleDeveloperName : this.rulesByDeveloperName.keySet()) {
                 RecordValidationRule__mdt rule = this.rulesByDeveloperName.get(ruleDeveloperName);
                 List<RecordValidationRuleCondition__mdt> ruleConditions = this.conditionsByRuleDeveloperName.get(rule.DeveloperName);
-                List<RecordValidationRuleTranslation__mdt> ruleTranslations = this.translationsByRuleDeveloperName.get(rule.DeveloperName);
-                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions, this.languageLocaleKey, ruleTranslations);
+                RecordValidationRuleTranslation__mdt ruleTranslation = this.getTranslation(rule.DeveloperName, this.languageLocaleKey);
+                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions, ruleTranslation);
 
                 if (shouldThrowException == true && ruleResult.hasError == true) {
                     throw new RecordValidatorException(ruleResult.errorMessage);
@@ -106,6 +106,24 @@ public without sharing class RecordValidator {
         }
     }
 
+    private RecordValidationRuleTranslation__mdt getTranslation(String ruleDeveloperName, String languageLocaleKey) {
+        List<RecordValidationRuleTranslation__mdt> ruleTranslations = this.translationsByRuleDeveloperName.get(ruleDeveloperName);
+
+        if (ruleTranslations == null || ruleTranslations.isEmpty() == true) {
+            return null;
+        }
+
+        RecordValidationRuleTranslation__mdt matchingTranslation;
+        for (RecordValidationRuleTranslation__mdt translation : ruleTranslations) {
+            if (this.languageLocaleKey.toLowerCase() == translation.LanguageLocaleKey__c.toLowerCase()) {
+                matchingTranslation = translation;
+                break;
+            }
+        }
+
+        return matchingTranslation;
+    }
+
     public class RecordValidatorException extends Exception {
     }
 
@@ -124,21 +142,18 @@ public without sharing class RecordValidator {
 
         private RecordValidationRule__mdt rule;
         private List<RecordValidationRuleCondition__mdt> ruleConditions;
-        private List<RecordValidationRuleTranslation__mdt> ruleTranslations;
-        private String languageLocaleKey;
+        private RecordValidationRuleTranslation__mdt translation;
 
         public ValidationRuleResult(
             SObject record,
             RecordValidationRule__mdt rule,
             List<RecordValidationRuleCondition__mdt> ruleConditions,
-            String languageLocaleKey,
-            List<RecordValidationRuleTranslation__mdt> ruleTranslations
+            RecordValidationRuleTranslation__mdt translation
         ) {
             this.record = record;
             this.rule = rule;
             this.ruleConditions = ruleConditions;
-            this.languageLocaleKey = languageLocaleKey;
-            this.ruleTranslations = ruleTranslations;
+            this.translation = translation;
 
             this.conditions = new List<String>();
             this.conditionsLogic = this.getRuleConditionsLogic();
@@ -158,23 +173,13 @@ public without sharing class RecordValidator {
             String parsedConditionsLogic = String.format(this.getRuleConditionsLogic(), booleanValues);
 
             Boolean hasError = new BooleanExpression().evaluate(parsedConditionsLogic);
-            if (hasError) {
+            if (hasError == true) {
                 this.errorMessage = this.getErrorMessage();
             }
         }
 
         private String getErrorMessage() {
-            if (String.isBlank(this.languageLocaleKey) || this.ruleTranslations == null || this.ruleTranslations.isEmpty() == true) {
-                return this.rule.ErrorMessage__c;
-            }
-
-            for (RecordValidationRuleTranslation__mdt translation : this.ruleTranslations) {
-                if (this.languageLocaleKey.toLowerCase() == translation.LanguageLocaleKey__c.toLowerCase()) {
-                    return translation.ErrorMessage__c;
-                }
-            }
-
-            return this.rule.ErrorMessage__c;
+            return translation != null ? translation.ErrorMessage__c : this.rule.ErrorMessage__c;
         }
 
         private String getRuleConditionsLogic() {
@@ -552,7 +557,7 @@ public without sharing class RecordValidator {
                 if (fieldDescribe.getSoapType() != Schema.SoapType.Id) {
                     return parentRecord.get(fieldDescribe.getName());
                 } else {
-                    parentSObjectType = fieldDescribe.getReferenceTo()[0];
+                    parentSObjectType = fieldDescribe.getReferenceTo().get(0);
 
                     SObject newParentRecord = parentRecord.getSObject(field);
                     if (newParentRecord == null) {
@@ -589,7 +594,7 @@ public without sharing class RecordValidator {
 
                 // TODO add support for polymorphic fields
                 if (i < lastFieldIndex) {
-                    currentSObjectType = field.getDescribe().getReferenceTo()[0];
+                    currentSObjectType = field.getDescribe().getReferenceTo().get(0);
                 }
 
                 fields.add(field);
