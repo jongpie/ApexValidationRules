@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>LanguageLocaleKey__c</fullName>
     <externalId>false</externalId>
@@ -11,64 +11,179 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>en_US</fullName>
+                <fullName>af</fullName>
                 <default>false</default>
-                <label>English</label>
+                <label>Afrikaans</label>
             </value>
             <value>
-                <fullName>de</fullName>
+                <fullName>sq</fullName>
                 <default>false</default>
-                <label>German</label>
+                <label>Albanian</label>
             </value>
             <value>
-                <fullName>es</fullName>
+                <fullName>am</fullName>
                 <default>false</default>
-                <label>Spanish</label>
+                <label>Amharic</label>
             </value>
             <value>
-                <fullName>fr</fullName>
+                <fullName>ar</fullName>
                 <default>false</default>
-                <label>French</label>
+                <label>Arabic</label>
             </value>
             <value>
-                <fullName>it</fullName>
+                <fullName>ar_DZ</fullName>
                 <default>false</default>
-                <label>Italian</label>
+                <label>Arabic (Algeria)</label>
             </value>
             <value>
-                <fullName>ja</fullName>
+                <fullName>ar_BH</fullName>
                 <default>false</default>
-                <label>Japanese</label>
+                <label>Arabic (Bahrain)</label>
             </value>
             <value>
-                <fullName>sv</fullName>
+                <fullName>ar_EG</fullName>
                 <default>false</default>
-                <label>Swedish</label>
+                <label>Arabic (Egypt)</label>
             </value>
             <value>
-                <fullName>ko</fullName>
+                <fullName>ar_IQ</fullName>
                 <default>false</default>
-                <label>Korean</label>
+                <label>Arabic (Iraq)</label>
+            </value>
+            <value>
+                <fullName>ar_JO</fullName>
+                <default>false</default>
+                <label>Arabic (Jordan)</label>
+            </value>
+            <value>
+                <fullName>ar_KW</fullName>
+                <default>false</default>
+                <label>Arabic (Kuwait)</label>
+            </value>
+            <value>
+                <fullName>ar_LB</fullName>
+                <default>false</default>
+                <label>Arabic (Lebanon)</label>
+            </value>
+            <value>
+                <fullName>ar_LY</fullName>
+                <default>false</default>
+                <label>Arabic (Libya)</label>
+            </value>
+            <value>
+                <fullName>ar_MA</fullName>
+                <default>false</default>
+                <label>Arabic (Morocco)</label>
+            </value>
+            <value>
+                <fullName>ar_OM</fullName>
+                <default>false</default>
+                <label>Arabic (Oman)</label>
+            </value>
+            <value>
+                <fullName>ar_QA</fullName>
+                <default>false</default>
+                <label>Arabic (Qatar)</label>
+            </value>
+            <value>
+                <fullName>ar_SA</fullName>
+                <default>false</default>
+                <label>Arabic (Saudi Arabia)</label>
+            </value>
+            <value>
+                <fullName>ar_SD</fullName>
+                <default>false</default>
+                <label>Arabic (Sudan)</label>
+            </value>
+            <value>
+                <fullName>ar_SY</fullName>
+                <default>false</default>
+                <label>Arabic (Syria)</label>
+            </value>
+            <value>
+                <fullName>ar_TN</fullName>
+                <default>false</default>
+                <label>Arabic (Tunisia)</label>
+            </value>
+            <value>
+                <fullName>ar_AE</fullName>
+                <default>false</default>
+                <label>Arabic (United Arab Emirates)</label>
+            </value>
+            <value>
+                <fullName>ar_YE</fullName>
+                <default>false</default>
+                <label>Arabic (Yemen)</label>
+            </value>
+            <value>
+                <fullName>hy</fullName>
+                <default>false</default>
+                <label>Armenian</label>
+            </value>
+            <value>
+                <fullName>eu</fullName>
+                <default>false</default>
+                <label>Basque</label>
+            </value>
+            <value>
+                <fullName>bn</fullName>
+                <default>false</default>
+                <label>Bengali</label>
+            </value>
+            <value>
+                <fullName>bs</fullName>
+                <default>false</default>
+                <label>Bosnian</label>
+            </value>
+            <value>
+                <fullName>bg</fullName>
+                <default>false</default>
+                <label>Bulgarian</label>
+            </value>
+            <value>
+                <fullName>my</fullName>
+                <default>false</default>
+                <label>Burmese</label>
+            </value>
+            <value>
+                <fullName>ca</fullName>
+                <default>false</default>
+                <label>Catalan</label>
+            </value>
+            <value>
+                <fullName>zh_HK</fullName>
+                <default>false</default>
+                <label>Chinese (Hong Kong)</label>
+            </value>
+            <value>
+                <fullName>zh_MY</fullName>
+                <default>false</default>
+                <label>Chinese (Malaysia)</label>
+            </value>
+            <value>
+                <fullName>zh_CN</fullName>
+                <default>false</default>
+                <label>Chinese (Simplified)</label>
+            </value>
+            <value>
+                <fullName>zh_SG</fullName>
+                <default>false</default>
+                <label>Chinese (Singapore)</label>
             </value>
             <value>
                 <fullName>zh_TW</fullName>
                 <default>false</default>
                 <label>Chinese (Traditional)</label>
-            </value>nal)</label>
-            <value>
-                <fullName>zh_CN</fullName>
-                <default>false</default>
-                <label>Chinese (Simplified)</label>
-            </value>ed)</label>
-            <value>
-                <fullName>pt_BR</fullName>
-                <default>false</default>
-                <label>Portuguese (Brazil)</label>
             </value>
             <value>
-                <fullName>nl_NL</fullName>
+                <fullName>hr</fullName>
                 <default>false</default>
-                <label>Dutch</label>
+                <label>Croatian</label>
+            </value>
+            <value>
+                <fullName>cs</fullName>
+                <default>false</default>
+                <label>Czech</label>
             </value>
             <value>
                 <fullName>da</fullName>
@@ -76,9 +191,84 @@
                 <label>Danish</label>
             </value>
             <value>
-                <fullName>th</fullName>
+                <fullName>nl_NL</fullName>
                 <default>false</default>
-                <label>Thai</label>
+                <label>Dutch</label>
+            </value>
+            <value>
+                <fullName>nl_BE</fullName>
+                <default>false</default>
+                <label>Dutch (Belgium)</label>
+            </value>
+            <value>
+                <fullName>en_AU</fullName>
+                <default>false</default>
+                <label>English (Australia)</label>
+            </value>
+            <value>
+                <fullName>en_CA</fullName>
+                <default>false</default>
+                <label>English (Canada)</label>
+            </value>
+            <value>
+                <fullName>en_HK</fullName>
+                <default>false</default>
+                <label>English (Hong Kong)</label>
+            </value>
+            <value>
+                <fullName>en_IN</fullName>
+                <default>false</default>
+                <label>English (India)</label>
+            </value>
+            <value>
+                <fullName>en_IE</fullName>
+                <default>false</default>
+                <label>English (Ireland)</label>
+            </value>
+            <value>
+                <fullName>en_MY</fullName>
+                <default>false</default>
+                <label>English (Malaysia)</label>
+            </value>
+            <value>
+                <fullName>en_NZ</fullName>
+                <default>false</default>
+                <label>English (New Zealand)</label>
+            </value>
+            <value>
+                <fullName>en_PH</fullName>
+                <default>false</default>
+                <label>English (Philippines)</label>
+            </value>
+            <value>
+                <fullName>en_SG</fullName>
+                <default>false</default>
+                <label>English (Singapore)</label>
+            </value>
+            <value>
+                <fullName>en_ZA</fullName>
+                <default>false</default>
+                <label>English (South Africa)</label>
+            </value>
+            <value>
+                <fullName>en_GB</fullName>
+                <default>false</default>
+                <label>English (UK)</label>
+            </value>
+            <value>
+                <fullName>en_US</fullName>
+                <default>false</default>
+                <label>English (US)</label>
+            </value>
+            <value>
+                <fullName>et</fullName>
+                <default>false</default>
+                <label>Estonian</label>
+            </value>
+            <value>
+                <fullName>fa</fullName>
+                <default>false</default>
+                <label>Farsi</label>
             </value>
             <value>
                 <fullName>fi</fullName>
@@ -86,19 +276,459 @@
                 <label>Finnish</label>
             </value>
             <value>
+                <fullName>fr</fullName>
+                <default>false</default>
+                <label>French</label>
+            </value>
+            <value>
+                <fullName>fr_BE</fullName>
+                <default>false</default>
+                <label>French (Belgium)</label>
+            </value>
+            <value>
+                <fullName>fr_CA</fullName>
+                <default>false</default>
+                <label>French (Canada)</label>
+            </value>
+            <value>
+                <fullName>fr_LU</fullName>
+                <default>false</default>
+                <label>French (Luxembourg)</label>
+            </value>
+            <value>
+                <fullName>fr_CH</fullName>
+                <default>false</default>
+                <label>French (Switzerland)</label>
+            </value>
+            <value>
+                <fullName>ka</fullName>
+                <default>false</default>
+                <label>Georgian</label>
+            </value>
+            <value>
+                <fullName>de</fullName>
+                <default>false</default>
+                <label>German</label>
+            </value>
+            <value>
+                <fullName>de_AT</fullName>
+                <default>false</default>
+                <label>German (Austria)</label>
+            </value>
+            <value>
+                <fullName>de_BE</fullName>
+                <default>false</default>
+                <label>German (Belgium)</label>
+            </value>
+            <value>
+                <fullName>de_LU</fullName>
+                <default>false</default>
+                <label>German (Luxembourg)</label>
+            </value>
+            <value>
+                <fullName>de_CH</fullName>
+                <default>false</default>
+                <label>German (Switzerland)</label>
+            </value>
+            <value>
+                <fullName>el</fullName>
+                <default>false</default>
+                <label>Greek</label>
+            </value>
+            <value>
+                <fullName>gu</fullName>
+                <default>false</default>
+                <label>Gujarati</label>
+            </value>
+            <value>
+                <fullName>ht</fullName>
+                <default>false</default>
+                <label>Haitian Creole</label>
+            </value>
+            <value>
+                <fullName>haw</fullName>
+                <default>false</default>
+                <label>Hawaiian</label>
+            </value>
+            <value>
+                <fullName>iw</fullName>
+                <default>false</default>
+                <label>Hebrew</label>
+            </value>
+            <value>
+                <fullName>hi</fullName>
+                <default>false</default>
+                <label>Hindi</label>
+            </value>
+            <value>
+                <fullName>hu</fullName>
+                <default>false</default>
+                <label>Hungarian</label>
+            </value>
+            <value>
+                <fullName>is</fullName>
+                <default>false</default>
+                <label>Icelandic</label>
+            </value>
+            <value>
+                <fullName>in</fullName>
+                <default>false</default>
+                <label>Indonesian</label>
+            </value>
+            <value>
+                <fullName>ga</fullName>
+                <default>false</default>
+                <label>Irish</label>
+            </value>
+            <value>
+                <fullName>it</fullName>
+                <default>false</default>
+                <label>Italian</label>
+            </value>
+            <value>
+                <fullName>it_CH</fullName>
+                <default>false</default>
+                <label>Italian (Switzerland)</label>
+            </value>
+            <value>
+                <fullName>ja</fullName>
+                <default>false</default>
+                <label>Japanese</label>
+            </value>
+            <value>
+                <fullName>kn</fullName>
+                <default>false</default>
+                <label>Kannada</label>
+            </value>
+            <value>
+                <fullName>kk</fullName>
+                <default>false</default>
+                <label>Kazakh</label>
+            </value>
+            <value>
+                <fullName>km</fullName>
+                <default>false</default>
+                <label>Khmer</label>
+            </value>
+            <value>
+                <fullName>ko</fullName>
+                <default>false</default>
+                <label>Korean</label>
+            </value>
+            <value>
+                <fullName>lv</fullName>
+                <default>false</default>
+                <label>Latvian</label>
+            </value>
+            <value>
+                <fullName>lt</fullName>
+                <default>false</default>
+                <label>Lithuanian</label>
+            </value>
+            <value>
+                <fullName>lb</fullName>
+                <default>false</default>
+                <label>Luxembourgish</label>
+            </value>
+            <value>
+                <fullName>mk</fullName>
+                <default>false</default>
+                <label>Macedonian</label>
+            </value>
+            <value>
+                <fullName>ms</fullName>
+                <default>false</default>
+                <label>Malay</label>
+            </value>
+            <value>
+                <fullName>ml</fullName>
+                <default>false</default>
+                <label>Malayalam</label>
+            </value>
+            <value>
+                <fullName>mt</fullName>
+                <default>false</default>
+                <label>Maltese</label>
+            </value>
+            <value>
+                <fullName>mr</fullName>
+                <default>false</default>
+                <label>Marathi</label>
+            </value>
+            <value>
+                <fullName>sh_ME</fullName>
+                <default>false</default>
+                <label>Montenegrin</label>
+            </value>
+            <value>
+                <fullName>no</fullName>
+                <default>false</default>
+                <label>Norwegian</label>
+            </value>
+            <value>
+                <fullName>pl</fullName>
+                <default>false</default>
+                <label>Polish</label>
+            </value>
+            <value>
+                <fullName>pt_BR</fullName>
+                <default>false</default>
+                <label>Portuguese (Brazil)</label>
+            </value>
+            <value>
+                <fullName>pt_PT</fullName>
+                <default>false</default>
+                <label>Portuguese (European)</label>
+            </value>
+            <value>
+                <fullName>ro</fullName>
+                <default>false</default>
+                <label>Romanian</label>
+            </value>
+            <value>
+                <fullName>ro_MD</fullName>
+                <default>false</default>
+                <label>Romanian (Moldova)</label>
+            </value>
+            <value>
+                <fullName>rm</fullName>
+                <default>false</default>
+                <label>Romansh</label>
+            </value>
+            <value>
                 <fullName>ru</fullName>
                 <default>false</default>
                 <label>Russian</label>
             </value>
             <value>
+                <fullName>ru_AM</fullName>
+                <default>false</default>
+                <label>Russian (Armenia)</label>
+            </value>
+            <value>
+                <fullName>ru_BY</fullName>
+                <default>false</default>
+                <label>Russian (Belarus)</label>
+            </value>
+            <value>
+                <fullName>ru_KZ</fullName>
+                <default>false</default>
+                <label>Russian (Kazakhstan)</label>
+            </value>
+            <value>
+                <fullName>ru_KG</fullName>
+                <default>false</default>
+                <label>Russian (Kyrgyzstan)</label>
+            </value>
+            <value>
+                <fullName>ru_LT</fullName>
+                <default>false</default>
+                <label>Russian (Lithuania)</label>
+            </value>
+            <value>
+                <fullName>ru_MD</fullName>
+                <default>false</default>
+                <label>Russian (Moldova)</label>
+            </value>
+            <value>
+                <fullName>ru_PL</fullName>
+                <default>false</default>
+                <label>Russian (Poland)</label>
+            </value>
+            <value>
+                <fullName>ru_UA</fullName>
+                <default>false</default>
+                <label>Russian (Ukraine)</label>
+            </value>
+            <value>
+                <fullName>sm</fullName>
+                <default>false</default>
+                <label>Samoan</label>
+            </value>
+            <value>
+                <fullName>sr</fullName>
+                <default>false</default>
+                <label>Serbian (Cyrillic)</label>
+            </value>
+            <value>
+                <fullName>sh</fullName>
+                <default>false</default>
+                <label>Serbian (Latin)</label>
+            </value>
+            <value>
+                <fullName>sk</fullName>
+                <default>false</default>
+                <label>Slovak</label>
+            </value>
+            <value>
+                <fullName>sl</fullName>
+                <default>false</default>
+                <label>Slovenian</label>
+            </value>
+            <value>
+                <fullName>es</fullName>
+                <default>false</default>
+                <label>Spanish</label>
+            </value>
+            <value>
+                <fullName>es_AR</fullName>
+                <default>false</default>
+                <label>Spanish (Argentina)</label>
+            </value>
+            <value>
+                <fullName>es_BO</fullName>
+                <default>false</default>
+                <label>Spanish (Bolivia)</label>
+            </value>
+            <value>
+                <fullName>es_CL</fullName>
+                <default>false</default>
+                <label>Spanish (Chile)</label>
+            </value>
+            <value>
+                <fullName>es_CO</fullName>
+                <default>false</default>
+                <label>Spanish (Colombia)</label>
+            </value>
+            <value>
+                <fullName>es_CR</fullName>
+                <default>false</default>
+                <label>Spanish (Costa Rica)</label>
+            </value>
+            <value>
+                <fullName>es_DO</fullName>
+                <default>false</default>
+                <label>Spanish (Dominican Republic)</label>
+            </value>
+            <value>
+                <fullName>es_EC</fullName>
+                <default>false</default>
+                <label>Spanish (Ecuador)</label>
+            </value>
+            <value>
+                <fullName>es_SV</fullName>
+                <default>false</default>
+                <label>Spanish (El Salvador)</label>
+            </value>
+            <value>
+                <fullName>es_GT</fullName>
+                <default>false</default>
+                <label>Spanish (Guatemala)</label>
+            </value>
+            <value>
+                <fullName>es_HN</fullName>
+                <default>false</default>
+                <label>Spanish (Honduras)</label>
+            </value>
+            <value>
                 <fullName>es_MX</fullName>
                 <default>false</default>
                 <label>Spanish (Mexico)</label>
-            </value>/label>
+            </value>
             <value>
-                <fullName>no</fullName>
+                <fullName>es_NI</fullName>
                 <default>false</default>
-                <label>Norwegian</label>
+                <label>Spanish (Nicaragua)</label>
+            </value>
+            <value>
+                <fullName>es_PA</fullName>
+                <default>false</default>
+                <label>Spanish (Panama)</label>
+            </value>
+            <value>
+                <fullName>es_PY</fullName>
+                <default>false</default>
+                <label>Spanish (Paraguay)</label>
+            </value>
+            <value>
+                <fullName>es_PE</fullName>
+                <default>false</default>
+                <label>Spanish (Peru)</label>
+            </value>
+            <value>
+                <fullName>es_PR</fullName>
+                <default>false</default>
+                <label>Spanish (Puerto Rico)</label>
+            </value>
+            <value>
+                <fullName>es_US</fullName>
+                <default>false</default>
+                <label>Spanish (United States)</label>
+            </value>
+            <value>
+                <fullName>es_UY</fullName>
+                <default>false</default>
+                <label>Spanish (Uruguay)</label>
+            </value>
+            <value>
+                <fullName>es_VE</fullName>
+                <default>false</default>
+                <label>Spanish (Venezuela)</label>
+            </value>
+            <value>
+                <fullName>sw</fullName>
+                <default>false</default>
+                <label>Swahili</label>
+            </value>
+            <value>
+                <fullName>sv</fullName>
+                <default>false</default>
+                <label>Swedish</label>
+            </value>
+            <value>
+                <fullName>tl</fullName>
+                <default>false</default>
+                <label>Tagalog</label>
+            </value>
+            <value>
+                <fullName>ta</fullName>
+                <default>false</default>
+                <label>Tamil</label>
+            </value>
+            <value>
+                <fullName>te</fullName>
+                <default>false</default>
+                <label>Telugu</label>
+            </value>
+            <value>
+                <fullName>mi</fullName>
+                <default>false</default>
+                <label>Te reo</label>
+            </value>
+            <value>
+                <fullName>th</fullName>
+                <default>false</default>
+                <label>Thai</label>
+            </value>
+            <value>
+                <fullName>tr</fullName>
+                <default>false</default>
+                <label>Turkish</label>
+            </value>
+            <value>
+                <fullName>uk</fullName>
+                <default>false</default>
+                <label>Ukrainian</label>
+            </value>
+            <value>
+                <fullName>ur</fullName>
+                <default>false</default>
+                <label>Urdu</label>
+            </value>
+            <value>
+                <fullName>cy</fullName>
+                <default>false</default>
+                <label>Welsh</label>
+            </value>
+            <value>
+                <fullName>xh</fullName>
+                <default>false</default>
+                <label>Xhosa</label>
+            </value>
+            <value>
+                <fullName>Zulu</fullName>
+                <default>false</default>
+                <label>zu</label>
             </value>
         </valueSetDefinition>
     </valueSet>
