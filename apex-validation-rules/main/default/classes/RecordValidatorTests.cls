@@ -32,8 +32,11 @@ private class RecordValidatorTests {
     // Simpler tests - each test is for 1 field with a different data type
     @isTest
     static void validateForRuleWithBooleanFieldAndAllOperators() {
-        String fieldPath = 'IsActive';
-        User record = new User(IsActive = true);
+        String fieldPath = Schema.User.IsActive.getDescribe().getName();
+        Boolean fieldValue = true;
+        User record = new User();
+        record.put(fieldPath, fieldValue);
+
         Map<String, Boolean> operatorToValue = new Map<String, Boolean>{ 'EQUAL_TO' => true, 'NOT_EQUAL_TO' => false };
         for (String operator : operatorToValue.keySet()) {
             Boolean value = operatorToValue.get(operator);
@@ -61,17 +64,17 @@ private class RecordValidatorTests {
 
     @isTest
     static void validateForRuleWithDateFieldAndAllOperators() {
-        String fieldPath = 'CloseDate';
-        Date opportunityCloseDate = System.today();
-        Opportunity record = new Opportunity(CloseDate = opportunityCloseDate);
+        String fieldPath = Schema.Opportunity.CloseDate.getDescribe().getName();
+        Date fieldValue = System.today();
+        Opportunity record = new Opportunity(CloseDate = fieldValue);
 
         Map<String, Date> operatorToValue = new Map<String, Date>{
-            'EQUAL_TO' => opportunityCloseDate,
-            'NOT_EQUAL_TO' => opportunityCloseDate.addDays(10),
-            'LESS_THAN' => opportunityCloseDate.addDays(10),
-            'LESS_THAN_OR_EQUAL_TO' => opportunityCloseDate.addDays(10),
-            'GREATER_THAN' => opportunityCloseDate.addDays(-10),
-            'GREATER_THAN_OR_EQUAL_TO' => opportunityCloseDate.addDays(-10)
+            'EQUAL_TO' => fieldValue,
+            'NOT_EQUAL_TO' => fieldValue.addDays(10),
+            'LESS_THAN' => fieldValue.addDays(10),
+            'LESS_THAN_OR_EQUAL_TO' => fieldValue.addDays(10),
+            'GREATER_THAN' => fieldValue.addDays(-10),
+            'GREATER_THAN_OR_EQUAL_TO' => fieldValue.addDays(-10)
         };
         for (String operator : operatorToValue.keySet()) {
             Date value = operatorToValue.get(operator);
@@ -99,17 +102,18 @@ private class RecordValidatorTests {
 
     @isTest
     static void validateForRuleWithDatetimeFieldAndAllOperators() {
-        String fieldPath = 'ActivityDatetime';
-        Datetime eventActivityDatetime = System.now().addDays(-3);
-        Event record = new Event(ActivityDatetime = eventActivityDatetime);
+        String fieldPath = Schema.Event.ActivityDatetime.getDescribe().getName();
+        Datetime fieldValue = System.now().addDays(-3);
+        Event record = new Event();
+        record.put(fieldPath, fieldValue);
 
         Map<String, Datetime> operatorToValue = new Map<String, Datetime>{
-            'EQUAL_TO' => eventActivityDatetime,
-            'NOT_EQUAL_TO' => eventActivityDatetime.addDays(10),
-            'LESS_THAN' => eventActivityDatetime.addDays(10),
-            'LESS_THAN_OR_EQUAL_TO' => eventActivityDatetime.addDays(10),
-            'GREATER_THAN' => eventActivityDatetime.addDays(-10),
-            'GREATER_THAN_OR_EQUAL_TO' => eventActivityDatetime.addDays(-10)
+            'EQUAL_TO' => fieldValue,
+            'NOT_EQUAL_TO' => fieldValue.addDays(10),
+            'LESS_THAN' => fieldValue.addDays(10),
+            'LESS_THAN_OR_EQUAL_TO' => fieldValue.addDays(10),
+            'GREATER_THAN' => fieldValue.addDays(-10),
+            'GREATER_THAN_OR_EQUAL_TO' => fieldValue.addDays(-10)
         };
         for (String operator : operatorToValue.keySet()) {
             Datetime value = operatorToValue.get(operator);
@@ -137,18 +141,18 @@ private class RecordValidatorTests {
 
     @isTest
     static void validateForRuleWithDecimalFieldAndAllOperators() {
-        String fieldPath = 'AnnualRevenue';
-        Decimal accountAnnualRevenue = 123000.9876;
-        Account record = new Account(Name = 'Test account');
-        record.AnnualRevenue = accountAnnualRevenue;
+        String fieldPath = Schema.Account.AnnualRevenue.getDescribe().getName();
+        Decimal fieldValue = 123000.9876;
+        Account record = new Account();
+        record.put(fieldPath, fieldValue);
 
         Map<String, Decimal> operatorToValue = new Map<String, Decimal>{
-            'EQUAL_TO' => accountAnnualRevenue,
-            'NOT_EQUAL_TO' => accountAnnualRevenue + 10.99,
-            'LESS_THAN' => accountAnnualRevenue + 10.25,
-            'LESS_THAN_OR_EQUAL_TO' => accountAnnualRevenue + 10.0000001,
-            'GREATER_THAN' => accountAnnualRevenue - 10,
-            'GREATER_THAN_OR_EQUAL_TO' => accountAnnualRevenue - 10
+            'EQUAL_TO' => fieldValue,
+            'NOT_EQUAL_TO' => fieldValue + 10.99,
+            'LESS_THAN' => fieldValue + 10.25,
+            'LESS_THAN_OR_EQUAL_TO' => fieldValue + 10.0000001,
+            'GREATER_THAN' => fieldValue - 10,
+            'GREATER_THAN_OR_EQUAL_TO' => fieldValue - 10
         };
         for (String operator : operatorToValue.keySet()) {
             Decimal value = operatorToValue.get(operator);
@@ -176,20 +180,59 @@ private class RecordValidatorTests {
 
     @isTest
     static void validateForRuleWithStringFieldAndAllOperators() {
-        String fieldPath = 'Name';
-        String accountName = 'Some account';
-        Account record = new Account(Name = 'Test account');
-        record.Name = accountName;
+        String fieldPath = Schema.Account.Name.getDescribe().getName();
+        String fieldValue = 'Some account';
+        Account record = new Account();
+        record.put(fieldPath, fieldValue);
 
         Map<String, String> operatorToValue = new Map<String, String>{
-            'EQUAL_TO' => accountName,
+            'EQUAL_TO' => fieldValue,
             'NOT_EQUAL_TO' => 'something else',
-            'STARTS_WITH' => accountName.left(3),
-            'CONTAINS' => accountName.substring(2, 4),
-            'ENDS_WITH' => accountName.right(3)
+            'STARTS_WITH' => fieldValue.left(3),
+            'CONTAINS' => fieldValue.substring(2, 4),
+            'ENDS_WITH' => fieldValue.right(3)
         };
         for (String operator : operatorToValue.keySet()) {
             String value = operatorToValue.get(operator);
+
+            RecordValidationRule__mdt rule = createMockRule();
+            RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
+            List<RecordValidationRuleCondition__mdt> conditions = new List<RecordValidationRuleCondition__mdt>{ condition };
+
+            RecordValidator validator = new RecordValidator(record).setRule(rule, conditions);
+            List<RecordValidator.ValidationRuleResult> results = validator.validate(false);
+            System.assertEquals(1, results.size(), 'Expected 1 validation rule result: ' + results);
+
+            RecordValidator.ValidationRuleResult result = results.get(0);
+            System.assertEquals(true, result.hasError, result);
+            System.assertEquals(rule.ErrorMessage__c, result.errorMessage, result);
+
+            try {
+                validator.validate();
+                System.assert(false, 'Exception expected on line above');
+            } catch (RecordValidator.RecordValidatorException ex) {
+                System.assert(ex.getMessage().contains(rule.ErrorMessage__c), ex);
+            }
+        }
+    }
+
+    @isTest
+    static void validateForRuleWithTimeFieldAndAllOperators() {
+        String fieldPath = Schema.ContactPointAddress.BestTimeToContactStartTime.getDescribe().getName();
+        Time fieldValue = Time.newInstance(9, 0, 0, 0);
+        ContactPointAddress record = new ContactPointAddress();
+        record.put(fieldPath, fieldValue);
+
+        Map<String, Time> operatorToValue = new Map<String, Time>{
+            'EQUAL_TO' => fieldValue,
+            'NOT_EQUAL_TO' => Time.newInstance(0, 0, 1, 0),
+            'LESS_THAN' => Time.newInstance(23, 0, 0, 0),
+            'LESS_THAN_OR_EQUAL_TO' => Time.newInstance(23, 0, 0, 0),
+            'GREATER_THAN' => Time.newInstance(0, 0, 0, 10),
+            'GREATER_THAN_OR_EQUAL_TO' => Time.newInstance(0, 0, 0, 10)
+        };
+        for (String operator : operatorToValue.keySet()) {
+            Time value = operatorToValue.get(operator);
 
             RecordValidationRule__mdt rule = createMockRule();
             RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);

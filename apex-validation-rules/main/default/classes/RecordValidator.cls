@@ -276,6 +276,9 @@ public without sharing class RecordValidator {
                 when STRING, ID {
                     return this.compareString((String) recordFieldValue, String.valueOf(comparisonValue));
                 }
+                when TIME {
+                    return this.compareTime((Time) recordFieldValue, this.getAsTime(comparisonValue));
+                }
                 when else {
                     throw new RecordValidatorException('Could not process field path: ' + this.ruleCondition.FieldPath__c);
                 }
@@ -350,6 +353,17 @@ public without sharing class RecordValidator {
             } else {
                 String decimalString = (String) decimalValue;
                 return (Decimal) JSON.deserialize(decimalString, Decimal.class);
+            }
+        }
+
+        private Time getAsTime(Object timeValue) {
+            if (timeValue == null) {
+                return null;
+            } else if (timeValue instanceof Time) {
+                return (Time) timeValue;
+            } else {
+                String timeString = (String) timeValue;
+                return (Time) JSON.deserialize(timeString, Time.class);
             }
         }
 
@@ -469,6 +483,32 @@ public without sharing class RecordValidator {
                 }
                 when else {
                     throw new RecordValidatorException('Unsupported operator for String: ' + this.ruleCondition.Operator__c);
+                }
+            }
+        }
+
+        private Boolean compareTime(Time recordFieldValue, Time comparisonValue) {
+            switch on this.ruleCondition.Operator__c {
+                when 'EQUAL_TO' {
+                    return recordFieldValue == comparisonValue;
+                }
+                when 'NOT_EQUAL_TO' {
+                    return recordFieldValue != comparisonValue;
+                }
+                when 'LESS_THAN' {
+                    return recordFieldValue < comparisonValue;
+                }
+                when 'LESS_THAN_OR_EQUAL_TO' {
+                    return recordFieldValue <= comparisonValue;
+                }
+                when 'GREATER_THAN' {
+                    return recordFieldValue > comparisonValue;
+                }
+                when 'GREATER_THAN_OR_EQUAL_TO' {
+                    return recordFieldValue >= comparisonValue;
+                }
+                when else {
+                    throw new RecordValidatorException('Unsupported operator for Time: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
