@@ -4,7 +4,7 @@
  *******************************************************************************************************/
 
 public without sharing class RecordValidator {
-    private static final Set<Schema.SObjectType> QUERIED_SOBJECT_TYPES = new Set<Schema.SObjectType>();
+    private static final Map<Schema.SObjectType, List<RecordValidationRule__mdt>> QUERIED_RULES_BY_SOBJECT_TYPE = new Map<Schema.SObjectType, List<RecordValidationRule__mdt>>();
 
     private final Map<String, RecordValidationRule__mdt> rulesByDeveloperName = new Map<String, RecordValidationRule__mdt>();
     private final Map<String, List<RecordValidationRuleCondition__mdt>> conditionsByRuleDeveloperName = new Map<String, List<RecordValidationRuleCondition__mdt>>();
@@ -36,6 +36,7 @@ public without sharing class RecordValidator {
         this.rulesByDeveloperName.put(rule.DeveloperName, rule);
         this.conditionsByRuleDeveloperName.put(rule.DeveloperName, conditions);
         this.translationsByRuleDeveloperName.put(rule.DeveloperName, translations);
+        this.rulesProvided = true;
         return this;
     }
 
@@ -78,33 +79,31 @@ public without sharing class RecordValidator {
 
     // Private methods
     private void loadConfiguredRules() {
-        if (QUERIED_SOBJECT_TYPES.contains(this.sobjectType)) {
-            return;
+        if (QUERIED_RULES_BY_SOBJECT_TYPE.containsKey(this.sobjectType) == false) {
+            List<RecordValidationRule__mdt> configuredRules = [
+                SELECT
+                    DeveloperName,
+                    SObjectType__c,
+                    ConditionLogicType__c,
+                    CustomConditionLogic__c,
+                    ErrorMessage__c,
+                    (
+                        SELECT FieldPath__c, Operator__c, ValueType__c, Value__c
+                        FROM RecordValidationRuleConditions__r
+                        ORDER BY SortOrder__c NULLS LAST, DeveloperName
+                    ),
+                    (SELECT LanguageLocaleKey__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
+                FROM RecordValidationRule__mdt
+                WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
+            ];
+            // Add to the static cache
+            QUERIED_RULES_BY_SOBJECT_TYPE.put(this.sobjectType, configuredRules);
         }
-
-        List<RecordValidationRule__mdt> configuredRules = [
-            SELECT
-                DeveloperName,
-                SObjectType__c,
-                ConditionLogicType__c,
-                CustomConditionLogic__c,
-                ErrorMessage__c,
-                (
-                    SELECT FieldPath__c, Operator__c, ValueType__c, Value__c
-                    FROM RecordValidationRuleConditions__r
-                    ORDER BY SortOrder__c NULLS LAST, DeveloperName
-                ),
-                (SELECT LanguageLocaleKey__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
-            FROM RecordValidationRule__mdt
-            WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
-        ];
 
         // Add to the current instance's cache
-        for (RecordValidationRule__mdt rule : configuredRules) {
+        for (RecordValidationRule__mdt rule : QUERIED_RULES_BY_SOBJECT_TYPE.get(this.sobjectType)) {
             this.setRule(rule, rule.RecordValidationRuleConditions__r, rule.RecordValidationRuleTranslations__r);
         }
-        // Add to the static cache
-        QUERIED_SOBJECT_TYPES.add(this.sobjectType);
     }
 
     public class RecordValidatorException extends Exception {

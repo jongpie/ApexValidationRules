@@ -136,22 +136,22 @@ private class RecordValidatorTests {
     }
 
     @isTest
-    static void validateForRuleWithDoubleFieldAndAllOperators() {
+    static void validateForRuleWithDecimalFieldAndAllOperators() {
         String fieldPath = 'AnnualRevenue';
-        Double accountAnnualRevenue = 123000;
+        Decimal accountAnnualRevenue = 123000.9876;
         Account record = new Account(Name = 'Test account');
         record.AnnualRevenue = accountAnnualRevenue;
 
-        Map<String, Double> operatorToValue = new Map<String, Double>{
+        Map<String, Decimal> operatorToValue = new Map<String, Decimal>{
             'EQUAL_TO' => accountAnnualRevenue,
-            'NOT_EQUAL_TO' => accountAnnualRevenue + 10,
-            'LESS_THAN' => accountAnnualRevenue + 10,
-            'LESS_THAN_OR_EQUAL_TO' => accountAnnualRevenue + 10,
+            'NOT_EQUAL_TO' => accountAnnualRevenue + 10.99,
+            'LESS_THAN' => accountAnnualRevenue + 10.25,
+            'LESS_THAN_OR_EQUAL_TO' => accountAnnualRevenue + 10.0000001,
             'GREATER_THAN' => accountAnnualRevenue - 10,
             'GREATER_THAN_OR_EQUAL_TO' => accountAnnualRevenue - 10
         };
         for (String operator : operatorToValue.keySet()) {
-            Double value = operatorToValue.get(operator);
+            Decimal value = operatorToValue.get(operator);
 
             RecordValidationRule__mdt rule = createMockRule();
             RecordValidationRuleCondition__mdt condition = createMockRuleCondition(fieldPath, operator, 'Value', value);
