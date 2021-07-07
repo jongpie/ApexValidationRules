@@ -3,7 +3,7 @@
     <fullName>CustomConditionLogic__c</fullName>
     <externalId>false</externalId>
     <fieldManageability>SubscriberControlled</fieldManageability>
-    <label>Custom Conditions Logic</label>
+    <label>Custom Condition Logic</label>
     <length>255</length>
     <required>false</required>
     <type>Text</type>

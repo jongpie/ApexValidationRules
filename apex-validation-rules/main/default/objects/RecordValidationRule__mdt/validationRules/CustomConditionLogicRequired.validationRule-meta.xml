@@ -7,5 +7,5 @@
    ISBLANK(CustomConditionLogic__c)
 )</errorConditionFormula>
     <errorDisplayField>CustomConditionLogic__c</errorDisplayField>
-    <errorMessage>Custom Conditions Logic is required when Conditions Logic Type = &apos;Custom Logic&apos;</errorMessage>
+    <errorMessage>Custom Condition Logic is required when Condition Logic Type = &apos;Custom Logic&apos;</errorMessage>
 </ValidationRule>

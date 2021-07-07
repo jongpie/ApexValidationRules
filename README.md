@@ -12,16 +12,18 @@
 An Apex library for validating field values on `SObject` records, using configurable custom metadata types
 
 1. Create validation rules via `RecordValidationRule__mdt` custom metadata type
-2. Call `RecordValidator` class in your trigger handler or class to validate the your records pass your validation rules
+2. Call `RecordValidator` class in your Apex code or call `FlowRecordValidator` in your Flow to validate the your records pass your validation rules
 
 This is useful in scenarios where standard validation rules cannot be used
 
 1. On-demand validation: standard validation rules only run on during DML statements. Apex Validation Rules can be executed at any point in your code.
-2. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes
+2. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes.
+
+3. Apex-only contexts: standard validation rules cannot run in some contexts, such as "after delete" trigger contexts or after workflow field updates/approval processes
 
 ## Examples
 
-### Simple Example: Validating Account Name
+### Simple Apex Example: Validating Account Name
 
 As a simple example, you can setup a custom rule to validate that an Account record does not have the name 'Some Account'. This is configured with:
 
@@ -48,7 +50,8 @@ If you want to simply see if a record has any validation errors (but you don't w
 
 ```java
     Account someAccount = new Account(Name = 'Some Account');
-    List<RecordValidator.ValidationRuleResult> results = new RecordValidator(someAccount).getResults();
+    Boolean shouldThrowAnException = false;
+    List<RecordValidator.ValidationRuleResult> results = new RecordValidator(someAccount).validate(shouldThrowAnException);
 
     // For each returned result, show the result details - in this particular example, there will be only 1 result
     for (RecordValidator.ValidationRuleResult result : results) {
@@ -60,7 +63,7 @@ If you want to simply see if a record has any validation errors (but you don't w
     }
 ```
 
-### Complex Example: Validating Multiple Fields on Account
+### Complex Apex Example: Validating Multiple Fields on Account
 
 You can also setup multiple conditions for a rule, using 1 of 3 types of logic (similar to setting up custom conditions for list views, reports and other standard functionality within Salesforce)
 
@@ -85,7 +88,8 @@ Same thing applies here: you can simply call `getResults()` instead of `validate
 
 ```java
     Account someAccount = new Account(Name = 'My New Account', Type = 'Web');
-    List<RecordValidator.ValidationRuleResult> results = new RecordValidator(someAccount).getResults();
+    Boolean shouldThrowAnException = false;
+    List<RecordValidator.ValidationRuleResult> results = new RecordValidator(someAccount).validate(shouldThrowAnException);
 
     // For each returned result, show the result details - in this particular example, there will be only 1 result
     for (RecordValidator.ValidationRuleResult result : results) {

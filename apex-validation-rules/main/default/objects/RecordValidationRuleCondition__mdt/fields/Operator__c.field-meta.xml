@@ -11,34 +11,49 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>==</fullName>
+                <fullName>EQUAL_TO</fullName>
                 <default>false</default>
-                <label>equals</label>
+                <label>equal to</label>
             </value>
             <value>
-                <fullName>!=</fullName>
+                <fullName>NOT_EQUAL_TO</fullName>
                 <default>false</default>
                 <label>not equal to</label>
             </value>
             <value>
-                <fullName>&lt;</fullName>
+                <fullName>LESS_THAN</fullName>
                 <default>false</default>
                 <label>less than</label>
             </value>
             <value>
-                <fullName>&gt;</fullName>
+                <fullName>GREATER_THAN</fullName>
                 <default>false</default>
                 <label>greater than</label>
             </value>
             <value>
-                <fullName>&lt;=</fullName>
+                <fullName>LESS_THAN_OR_EQUAL_TO</fullName>
                 <default>false</default>
                 <label>less than or equal to</label>
             </value>
             <value>
-                <fullName>&gt;=</fullName>
+                <fullName>GREATER_THAN_OR_EQUAL_TO</fullName>
                 <default>false</default>
                 <label>greater than or equal to</label>
+            </value>
+            <value>
+                <fullName>STARTS_WITH</fullName>
+                <default>false</default>
+                <label>starts with</label>
+            </value>
+            <value>
+                <fullName>CONTAINS</fullName>
+                <default>false</default>
+                <label>contains</label>
+            </value>
+            <value>
+                <fullName>ENDS_WITH</fullName>
+                <default>false</default>
+                <label>ends with</label>
             </value>
         </valueSetDefinition>
     </valueSet>

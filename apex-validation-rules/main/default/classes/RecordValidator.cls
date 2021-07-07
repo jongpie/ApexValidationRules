@@ -1,16 +1,19 @@
-/*****************************************************************************************************
- * This file is part of the Apex Validation Rules project, released under the MIT License.            *
+/********************************************************************************************************
+ * This file is part of the Apex Validation Rules project, released under the MIT License.              *
  * See LICENSE file or go to https://github.com/jongpie/RecordValidationRules for full license details. *
- *****************************************************************************************************/
+ *******************************************************************************************************/
 
 public without sharing class RecordValidator {
-    private static final List<String> RULE_DEVELOPER_NAMES = new List<String>();
-    private static final Map<String, RecordValidationRule__mdt> RULES_BY_DEVELOPER_NAME = new Map<String, RecordValidationRule__mdt>();
-    private static final Map<String, List<RecordValidationRuleCondition__mdt>> CONDITIONS_BY_RULE_DEVELOPER_NAME = new Map<String, List<RecordValidationRuleCondition__mdt>>();
+    private static final Map<Schema.SObjectType, List<RecordValidationRule__mdt>> QUERIED_RULES_BY_SOBJECT_TYPE = new Map<Schema.SObjectType, List<RecordValidationRule__mdt>>();
+
+    private final Map<String, RecordValidationRule__mdt> rulesByDeveloperName = new Map<String, RecordValidationRule__mdt>();
+    private final Map<String, List<RecordValidationRuleCondition__mdt>> conditionsByRuleDeveloperName = new Map<String, List<RecordValidationRuleCondition__mdt>>();
+    private final Map<String, List<RecordValidationRuleTranslation__mdt>> translationsByRuleDeveloperName = new Map<String, List<RecordValidationRuleTranslation__mdt>>();
 
     private List<SObject> records;
     private Schema.SObjectType sobjectType;
     private Boolean rulesProvided = false;
+    private String languageLocaleKey = UserInfo.getLanguage();
 
     public RecordValidator(SObject record) {
         this(new List<SObject>{ record });
@@ -21,57 +24,49 @@ public without sharing class RecordValidator {
         this.sobjectType = records.get(0).getSObjectType();
     }
 
-    // public RecordValidator setRule(RecordValidationRule__mdt rule) {
-    //     this.rulesProvided = true;
-    //     return this.setRule(rule, rule.RecordValidationRuleConditions__r);
-    // }
-
-    // public RecordValidator setRules(List<RecordValidationRule__mdt> rules) {
-    //     for (RecordValidationRule__mdt rule : rules) {
-    //         this.setRule(rule);
-    //     }
-    //     return this;
-    // }
-
-    public List<ValidationRuleResult> getResults() {
-        return this.validate(false);
+    public RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
+        return this.setRule(rule, conditions, null);
     }
 
-    public void validate() {
-        this.validate(true);
-    }
-
-    // Private testVisible methods for mocking
-    @testVisible
-    private RecordValidator setRule(RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> conditions) {
-        RULE_DEVELOPER_NAMES.add(rule.DeveloperName);
-        RULES_BY_DEVELOPER_NAME.put(rule.DeveloperName, rule);
-        CONDITIONS_BY_RULE_DEVELOPER_NAME.put(rule.DeveloperName, conditions);
+    public RecordValidator setRule(
+        RecordValidationRule__mdt rule,
+        List<RecordValidationRuleCondition__mdt> conditions,
+        List<RecordValidationRuleTranslation__mdt> translations
+    ) {
+        this.rulesByDeveloperName.put(rule.DeveloperName, rule);
+        this.conditionsByRuleDeveloperName.put(rule.DeveloperName, conditions);
+        this.translationsByRuleDeveloperName.put(rule.DeveloperName, translations);
+        this.rulesProvided = true;
         return this;
     }
 
-    // Private methods
-    private List<ValidationRuleResult> validate(Boolean shouldThrowException) {
-        if (RULE_DEVELOPER_NAMES.isEmpty() == true && rulesProvided == false) {
+    public RecordValidator setLanguageLocale(String languageLocaleKey) {
+        this.languageLocaleKey = languageLocaleKey;
+        return this;
+    }
+
+    public List<ValidationRuleResult> validate() {
+        return this.validate(true);
+    }
+
+    public List<ValidationRuleResult> validate(Boolean shouldThrowException) {
+        if (this.rulesByDeveloperName.isEmpty() == true && rulesProvided == false) {
             this.loadConfiguredRules();
         }
 
         // If there aren't any rules loaded or provided, then something isn't right
-        if (shouldThrowException == true && RULE_DEVELOPER_NAMES.isEmpty() == true) {
+        if (shouldThrowException == true && this.rulesByDeveloperName.isEmpty() == true) {
             throw new RecordValidatorException('No rules provided or configured, cannot validate');
         }
 
         List<ValidationRuleResult> results = new List<ValidationRuleResult>();
         for (SObject record : this.records) {
-            // record.recalculateFormulas();
-            for (String ruleDeveloperName : RULE_DEVELOPER_NAMES) {
-                RecordValidationRule__mdt rule = RULES_BY_DEVELOPER_NAME.get(ruleDeveloperName);
-                List<RecordValidationRuleCondition__mdt> ruleConditions = CONDITIONS_BY_RULE_DEVELOPER_NAME.get(rule.DeveloperName);
-                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions);
-System.debug('ruleResult==' + ruleResult);
-System.debug('ruleResult.ruleConditions==' + ruleResult.ruleConditions);
-System.debug('ruleResult.getErrorMessage()==' + ruleResult.getErrorMessage());
-System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditionsLogic());
+            for (String ruleDeveloperName : this.rulesByDeveloperName.keySet()) {
+                RecordValidationRule__mdt rule = this.rulesByDeveloperName.get(ruleDeveloperName);
+                List<RecordValidationRuleCondition__mdt> ruleConditions = this.conditionsByRuleDeveloperName.get(rule.DeveloperName);
+                RecordValidationRuleTranslation__mdt ruleTranslation = this.getTranslation(rule.DeveloperName, this.languageLocaleKey);
+                ValidationRuleResult ruleResult = new ValidationRuleResult(record, rule, ruleConditions, ruleTranslation);
+
                 if (shouldThrowException == true && ruleResult.hasError == true) {
                     throw new RecordValidatorException(ruleResult.errorMessage);
                 }
@@ -84,27 +79,56 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
 
     // Private methods
     private void loadConfiguredRules() {
-        List<RecordValidationRule__mdt> configuredRules = [
-            SELECT
-                DeveloperName,
-                SObjectType__c,
-                ConditionLogicType__c,
-                CustomConditionLogic__c,
-                ErrorMessage__c,
-                (SELECT FieldPath__c, Operator__c, ValueType__c, Value__c FROM RecordValidationRuleConditions__r ORDER BY SortOrder__c),
-                (SELECT Language__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
-            FROM RecordValidationRule__mdt
-            WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
-        ];
-        for (RecordValidationRule__mdt rule : configuredRules) {
-            this.setRule(rule, rule.RecordValidationRuleConditions__r);
+        if (QUERIED_RULES_BY_SOBJECT_TYPE.containsKey(this.sobjectType) == false) {
+            List<RecordValidationRule__mdt> configuredRules = [
+                SELECT
+                    DeveloperName,
+                    SObjectType__c,
+                    ConditionLogicType__c,
+                    CustomConditionLogic__c,
+                    ErrorMessage__c,
+                    (
+                        SELECT FieldPath__c, Operator__c, ValueType__c, Value__c
+                        FROM RecordValidationRuleConditions__r
+                        ORDER BY SortOrder__c NULLS LAST, DeveloperName
+                    ),
+                    (SELECT LanguageLocaleKey__c, ErrorMessage__c FROM RecordValidationRuleTranslations__r)
+                FROM RecordValidationRule__mdt
+                WHERE SObjectType__c = :String.valueOf(this.sobjectType) AND IsActive__c = TRUE
+            ];
+            // Add to the static cache
+            QUERIED_RULES_BY_SOBJECT_TYPE.put(this.sobjectType, configuredRules);
         }
+
+        // Add to the current instance's cache
+        for (RecordValidationRule__mdt rule : QUERIED_RULES_BY_SOBJECT_TYPE.get(this.sobjectType)) {
+            this.setRule(rule, rule.RecordValidationRuleConditions__r, rule.RecordValidationRuleTranslations__r);
+        }
+    }
+
+    private RecordValidationRuleTranslation__mdt getTranslation(String ruleDeveloperName, String languageLocaleKey) {
+        List<RecordValidationRuleTranslation__mdt> ruleTranslations = this.translationsByRuleDeveloperName.get(ruleDeveloperName);
+
+        if (ruleTranslations == null || ruleTranslations.isEmpty() == true) {
+            return null;
+        }
+
+        RecordValidationRuleTranslation__mdt matchingTranslation;
+        for (RecordValidationRuleTranslation__mdt translation : ruleTranslations) {
+            if (this.languageLocaleKey.toLowerCase() == translation.LanguageLocaleKey__c.toLowerCase()) {
+                matchingTranslation = translation;
+                break;
+            }
+        }
+
+        return matchingTranslation;
     }
 
     public class RecordValidatorException extends Exception {
     }
 
     public class ValidationRuleResult {
+        public SObject record { get; private set; }
         public List<String> conditions { get; private set; }
         public String conditionsLogic { get; private set; }
         public String conditionsLogicType { get; private set; }
@@ -115,21 +139,21 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
             }
             private set;
         }
-        public Id recordId {
-            get {
-                return this.record.Id;
-            }
-            private set;
-        }
 
-        private SObject record;
         private RecordValidationRule__mdt rule;
         private List<RecordValidationRuleCondition__mdt> ruleConditions;
+        private RecordValidationRuleTranslation__mdt translation;
 
-        public ValidationRuleResult(SObject record, RecordValidationRule__mdt rule, List<RecordValidationRuleCondition__mdt> ruleConditions) {
+        public ValidationRuleResult(
+            SObject record,
+            RecordValidationRule__mdt rule,
+            List<RecordValidationRuleCondition__mdt> ruleConditions,
+            RecordValidationRuleTranslation__mdt translation
+        ) {
             this.record = record;
             this.rule = rule;
             this.ruleConditions = ruleConditions;
+            this.translation = translation;
 
             this.conditions = new List<String>();
             this.conditionsLogic = this.getRuleConditionsLogic();
@@ -147,33 +171,20 @@ System.debug('ruleResult.getRuleConditionsLogic()==' + ruleResult.getRuleConditi
             }
 
             String parsedConditionsLogic = String.format(this.getRuleConditionsLogic(), booleanValues);
-            System.debug('parsedConditionsLogic==' + parsedConditionsLogic);
 
             Boolean hasError = new BooleanExpression().evaluate(parsedConditionsLogic);
-            System.debug('hasError==' + hasError);
-            if (hasError) {
+            if (hasError == true) {
                 this.errorMessage = this.getErrorMessage();
-                System.debug('this.errorMessage==' + this.errorMessage);
             }
         }
 
         private String getErrorMessage() {
-            if (this.rule.RecordValidationRuleTranslations__r.isEmpty() == true) {
-                return this.rule.ErrorMessage__c;
-            }
-
-            for (RecordValidationRuleTranslation__mdt translation : this.rule.RecordValidationRuleTranslations__r) {
-                if (translation.Language__c == UserInfo.getLanguage()) {
-                    return translation.ErrorMessage__c;
-                }
-            }
-
-            return this.rule.ErrorMessage__c;
+            return translation != null ? translation.ErrorMessage__c : this.rule.ErrorMessage__c;
         }
 
         private String getRuleConditionsLogic() {
             String conditionsLogic = String.isBlank(this.rule.CustomConditionLogic__c) ? '' : this.rule.CustomConditionLogic__c;
-System.debug('conditionsLogic==' + conditionsLogic);
+
             if (this.rule.ConditionLogicType__c != 'Custom') {
                 List<String> standardLogicPieces = new List<String>();
                 for (Integer i = 0; i < this.ruleConditions.size(); i++) {
@@ -181,7 +192,6 @@ System.debug('conditionsLogic==' + conditionsLogic);
                 }
                 conditionsLogic = '(' + String.join(standardLogicPieces, ' ' + this.rule.ConditionLogicType__c + ' ') + ')';
             }
-System.debug('and nowconditionsLogic==' + conditionsLogic);
 
             List<String> parsedCharacters = new List<String>();
             Boolean hasFoundNumbers = false;
@@ -226,7 +236,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             this.ruleCondition = ruleCondition;
             this.sobjectApiName = this.record.getSObjectType().getDescribe().getName();
 
-            this.hasError = this.getHasError();
+            this.hasError = this.hasError();
         }
 
         public String getCondition() {
@@ -240,7 +250,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
                 ')';
         }
 
-        public Boolean getHasError() {
+        public Boolean hasError() {
             if (this.ruleCondition.ValueType__c == 'RegEx') {
                 return this.getHasRegExError();
             }
@@ -250,31 +260,27 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             Object recordFieldValue = this.getFieldValue();
             Object comparisonValue = this.getComparisonValue();
 
-            switch on field.getDescribe().getType() {
-                when Boolean {
-                    return this.compareBoolean(Boolean.valueOf(recordFieldValue), Boolean.valueOf(comparisonValue));
+            switch on field.getDescribe().getSoapType() {
+                when BOOLEAN {
+                    return this.compareBoolean((Boolean) recordFieldValue, this.getAsBoolean(comparisonValue));
                 }
-                when Currency {
-                    return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
+                when DOUBLE, INTEGER {
+                    return this.compareDecimal((Decimal) recordFieldValue, this.getAsDecimal(comparisonValue));
                 }
-                when Date {
-                    Date recordFieldDate = this.getAsDate(recordFieldValue);
-                    Date comparisonDate = this.getAsDate(comparisonValue);
-                    return this.compareDate(recordFieldDate, comparisonDate);
+                when DATE {
+                    return this.compareDate((Date) recordFieldValue, this.getAsDate(comparisonValue));
                 }
-                when Datetime {
-                    Datetime recordFieldDatetime = this.getAsDatetime(recordFieldValue);
-                    Datetime comparisonDatetime = this.getAsDatetime(comparisonValue);
-                    return this.compareDatetime(recordFieldDatetime, comparisonDatetime);
+                when DATETIME {
+                    return this.compareDatetime((Datetime) recordFieldValue, this.getAsDatetime(comparisonValue));
                 }
-                when Double, Integer, Percent {
-                    return this.compareDouble(Double.valueOf(recordFieldValue), Double.valueOf(comparisonValue));
+                when STRING, ID {
+                    return this.compareString((String) recordFieldValue, String.valueOf(comparisonValue));
                 }
-                when Email, Id, MultiPicklist, Phone, Picklist, Reference, String, Combobox, TextArea, Url {
-                    return this.compareString(String.valueOf(recordFieldValue), String.valueOf(comparisonValue));
+                when TIME {
+                    return this.compareTime((Time) recordFieldValue, this.getAsTime(comparisonValue));
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Could not process field path: ' + this.ruleCondition.FieldPath__c);
                 }
             }
         }
@@ -305,181 +311,214 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             }
         }
 
+        // Helper methods for dealing with converting field values & strings
+        // (stored in CMDT) to the appropriate data type
+        private Boolean getAsBoolean(Object booleanValue) {
+            if (booleanValue == null) {
+                return null;
+            } else if (booleanValue instanceof Boolean) {
+                return (Boolean) booleanValue;
+            } else {
+                return Boolean.valueOf(booleanValue);
+            }
+        }
+
+        private Date getAsDate(Object dateValue) {
+            if (dateValue == null) {
+                return null;
+            } else if (dateValue instanceof Date) {
+                return (Date) dateValue;
+            } else {
+                String dateString = (String) dateValue;
+                return (Date) JSON.deserialize(dateString, Date.class);
+            }
+        }
+
+        private Datetime getAsDatetime(Object datetimeValue) {
+            if (datetimeValue == null) {
+                return null;
+            } else if (datetimeValue instanceof Datetime) {
+                return (Datetime) datetimeValue;
+            } else {
+                String datetimeString = (String) datetimeValue;
+                return (Datetime) JSON.deserialize(datetimeString, Datetime.class);
+            }
+        }
+
+        private Decimal getAsDecimal(Object decimalValue) {
+            if (decimalValue == null) {
+                return null;
+            } else if (decimalValue instanceof Decimal) {
+                return (Decimal) decimalValue;
+            } else {
+                String decimalString = (String) decimalValue;
+                return (Decimal) JSON.deserialize(decimalString, Decimal.class);
+            }
+        }
+
+        private Time getAsTime(Object timeValue) {
+            if (timeValue == null) {
+                return null;
+            } else if (timeValue instanceof Time) {
+                return (Time) timeValue;
+            } else {
+                String timeString = (String) timeValue;
+                return (Time) JSON.deserialize(timeString, Time.class);
+            }
+        }
+
+        // In Apex, you can't use comparison operators on instances of Object, so several private methods are used for each data type
+        // Example of what you can't do in Apex:
+        //          Object today = System.today();
+        //          Object yesterday = System.today().addDays(-1);
+        //          System.assert(today > yesterday); // This line cannot execute since it's comparing Object
         private Boolean compareBoolean(Boolean recordFieldValue, Boolean comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Boolean: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
         private Boolean compareDate(Date recordFieldValue, Date comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Date: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
         private Boolean compareDatetime(Datetime recordFieldValue, Datetime comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Datetime: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
 
-        private Boolean compareDouble(Double recordFieldValue, Double comparisonValue) {
+        private Boolean compareDecimal(Decimal recordFieldValue, Decimal comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Decimal: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
-
-        // private Boolean compareInteger(Integer recordFieldValue, Integer comparisonValue) {
-        //     switch on this.ruleCondition.Operator__c {
-        //         when '==' {
-        //             return recordFieldValue == comparisonValue;
-        //         }
-        //         when '!=' {
-        //             return recordFieldValue != comparisonValue;
-        //         }
-        //         when '<' {
-        //             return recordFieldValue < comparisonValue;
-        //         }
-        //         when '<=' {
-        //             return recordFieldValue <= comparisonValue;
-        //         }
-        //         when '>' {
-        //             return recordFieldValue > comparisonValue;
-        //         }
-        //         when '>=' {
-        //             return recordFieldValue >= comparisonValue;
-        //         }
-        //         when else {
-        //             throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
-        //         }
-        //     }
-        // }
 
         private Boolean compareString(String recordFieldValue, String comparisonValue) {
             switch on this.ruleCondition.Operator__c {
-                when '==' {
+                when 'EQUAL_TO' {
                     return recordFieldValue == comparisonValue;
                 }
-                when '!=' {
+                when 'NOT_EQUAL_TO' {
                     return recordFieldValue != comparisonValue;
                 }
-                when '<' {
+                when 'STARTS_WITH' {
+                    return recordFieldValue.startsWith(comparisonValue);
+                }
+                when 'CONTAINS' {
+                    return recordFieldValue.contains(comparisonValue);
+                }
+                when 'ENDS_WITH' {
+                    return recordFieldValue.endsWith(comparisonValue);
+                }
+                when else {
+                    throw new RecordValidatorException('Unsupported operator for String: ' + this.ruleCondition.Operator__c);
+                }
+            }
+        }
+
+        private Boolean compareTime(Time recordFieldValue, Time comparisonValue) {
+            switch on this.ruleCondition.Operator__c {
+                when 'EQUAL_TO' {
+                    return recordFieldValue == comparisonValue;
+                }
+                when 'NOT_EQUAL_TO' {
+                    return recordFieldValue != comparisonValue;
+                }
+                when 'LESS_THAN' {
                     return recordFieldValue < comparisonValue;
                 }
-                when '<=' {
+                when 'LESS_THAN_OR_EQUAL_TO' {
                     return recordFieldValue <= comparisonValue;
                 }
-                when '>' {
+                when 'GREATER_THAN' {
                     return recordFieldValue > comparisonValue;
                 }
-                when '>=' {
+                when 'GREATER_THAN_OR_EQUAL_TO' {
                     return recordFieldValue >= comparisonValue;
                 }
                 when else {
-                    throw new RecordValidatorException('Unknown operator: ' + this.ruleCondition.Operator__c);
+                    throw new RecordValidatorException('Unsupported operator for Time: ' + this.ruleCondition.Operator__c);
                 }
             }
         }
-
-        private Date getAsDate(Object dateValue) {
-            String dateString;
-            if (dateValue == null) {
-                return null;
-            } else if (dateValue instanceOf String) {
-                dateString = (String) dateValue;
-            } else {
-                dateString = JSON.serialize(dateValue);
-            }
-            return (Date) JSON.deserialize(dateString, Date.class);
-        }
-
-        private Datetime getAsDatetime(Object datetimeValue) {
-            System.debug('casting datetimeValue: ' + datetimeValue);
-            String datetimeString;
-            if (datetimeValue == null) {
-                return null;
-            } else if (datetimeValue instanceOf String) {
-                datetimeString = (String) datetimeValue;
-            } else {
-                datetimeString = JSON.serialize(datetimeValue);
-            }
-            return (Datetime) JSON.deserialize(datetimeString, Datetime.class);
-        }
     }
 
-    //https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
-    public class BooleanExpression {
+    // Credit goes to this StackExchange post for the original BooleanExpression class -
+    // below is a modified version of the class
+    // https://salesforce.stackexchange.com/questions/113300/boolean-evaluation-in-apex/113308
+    private class BooleanExpression {
         public Boolean evaluate(String x) {
-            System.debug('evaluating bool string: ' + x);
-
             x = simplify(x);
 
             if (isSimpleExpression(x)) {
@@ -501,7 +540,6 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
                 return !evaluate(x.substring(1));
             }
 
-            System.debug('final evaluation of x: ' + x);
             return Boolean.valueOf(x);
         }
 
@@ -521,7 +559,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             x = x.trim();
             x = x.replace('AND', '&&');
             x = x.replace('OR', '||');
-            while (x.contains('(')) {
+            while (x.contains('(') == true) {
                 String sub = x.substringAfterLast('(').substringBefore(')');
                 x = x.replace('(' + sub + ')', String.valueOf(evaluate(sub)));
             }
@@ -544,29 +582,9 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             this.fieldDescribe = this.getLastFieldDescribe();
         }
 
-        // public FieldPath(Schema.SObjectType sobjectType, Schema.SObjectField field) {
-        //     this(sobjectType, new List<Schema.SObjectField>{ field });
-        // }
-
-        // public FieldPath(Schema.SObjectType sobjectType, List<Schema.SObjectField> fieldChain) {
-        //     this.sobjectType = sobjectType;
-        //     this.fieldChain = fieldChain;
-        //     this.fieldPath = this.getQueryField(fieldChain);
-
-        //     this.fieldDescribe = this.getLastFieldDescribe();
-        // }
-
-        // public Schema.DescribeFieldResult getDescribe() {
-        //     return this.fieldDescribe;
-        // }
-
         public Schema.SObjectField getField() {
             return this.fieldChain[this.fieldChain.size() - 1];
         }
-
-        // public String getFieldPath() {
-        //     return this.fieldPath;
-        // }
 
         public Object getValue(SObject record) {
             Schema.SObjectType parentSObjectType = this.sobjectType;
@@ -579,7 +597,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
                 if (fieldDescribe.getSoapType() != Schema.SoapType.Id) {
                     return parentRecord.get(fieldDescribe.getName());
                 } else {
-                    parentSObjectType = fieldDescribe.getReferenceTo()[0];
+                    parentSObjectType = fieldDescribe.getReferenceTo().get(0);
 
                     SObject newParentRecord = parentRecord.getSObject(field);
                     if (newParentRecord == null) {
@@ -616,7 +634,7 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
 
                 // TODO add support for polymorphic fields
                 if (i < lastFieldIndex) {
-                    currentSObjectType = field.getDescribe().getReferenceTo()[0];
+                    currentSObjectType = field.getDescribe().getReferenceTo().get(0);
                 }
 
                 fields.add(field);
@@ -629,22 +647,5 @@ System.debug('and nowconditionsLogic==' + conditionsLogic);
             Integer lastFieldIndex = this.fieldChain.size() - 1;
             return this.fieldChain[lastFieldIndex].getDescribe();
         }
-
-        // private String getQueryField(List<Schema.SObjectField> fields) {
-        //     Integer lastFieldIndex = fields.size() - 1;
-        //     List<String> fieldPathPieces = new List<String>();
-        //     for (Integer i = 0; i < fields.size(); i++) {
-        //         SObjectField field = fields[i];
-        //         // If any field in the chain is not accessible, then the user cant access the data, so return an empty list
-        //         if (!field.getDescribe().isAccessible()) {
-        //             return null;
-        //         } else if (i == lastFieldIndex) {
-        //             fieldPathPieces.add(field.getDescribe().getName());
-        //         } else {
-        //             fieldPathPieces.add(field.getDescribe().getRelationshipName());
-        //         }
-        //     }
-        //     return String.join(fieldPathPieces, '.');
-        // }
     }
 }

@@ -4,11 +4,8 @@
     <columns>MasterLabel</columns>
     <columns>DeveloperName</columns>
     <columns>RecordValidationRule__c</columns>
-    <columns>SortOrder__c</columns>
-    <columns>FieldPath__c</columns>
-    <columns>Operator__c</columns>
-    <columns>ValueType__c</columns>
-    <columns>Value__c</columns>
+    <columns>LanguageLocaleKey__c</columns>
+    <columns>ErrorMessage__c</columns>
     <filterScope>Everything</filterScope>
     <label>All</label>
 </ListView>
