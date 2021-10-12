@@ -574,11 +574,9 @@ public without sharing class RecordValidator {
         private Schema.SObjectType sobjectType;
 
         public FieldPath(String sobjectApiName, String fieldPath) {
-            Schema.SObjectType sobjectType = Schema.getGlobalDescribe().get(sobjectApiName);
-
-            this.fieldChain = this.getFieldChain(sobjectType, fieldPath);
+            this.sobjectType = ((SObject) Type.forName(sobjectApiName).newInstance()).getSObjectType();
+            this.fieldChain = this.getFieldChain(this.sobjectType, fieldPath);
             this.fieldPath = fieldPath;
-
             this.fieldDescribe = this.getLastFieldDescribe();
         }
 
@@ -591,13 +589,12 @@ public without sharing class RecordValidator {
             SObject parentRecord = record;
 
             for (Schema.SObjectField field : this.fieldChain) {
-                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
-                String relationshipName = fieldDescribe.getRelationshipName();
+                Schema.DescribeFieldResult localFieldDescribe = field.getDescribe();
 
-                if (fieldDescribe.getSoapType() != Schema.SoapType.Id) {
-                    return parentRecord.get(fieldDescribe.getName());
+                if (localFieldDescribe.getSoapType() != Schema.SoapType.Id) {
+                    return parentRecord.get(localFieldDescribe.getName());
                 } else {
-                    parentSObjectType = fieldDescribe.getReferenceTo().get(0);
+                    parentSObjectType = localFieldDescribe.getReferenceTo().get(0);
 
                     SObject newParentRecord = parentRecord.getSObject(field);
                     if (newParentRecord == null) {
@@ -625,7 +622,7 @@ public without sharing class RecordValidator {
                 if (i == lastFieldIndex) {
                     fieldApiName = fieldPathPiece;
                 } else if (fieldPathPiece.endsWith('__r')) {
-                    fieldApiName = fieldPathPiece.replace('__r', '__c');
+                    fieldApiName = fieldPathPiece.removeEnd('__r') + '__c';
                 } else {
                     fieldApiName = fieldPathPiece + 'Id';
                 }
